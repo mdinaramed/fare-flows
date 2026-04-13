@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { TrainSearch } from "@/components/TrainSearch";
 import { TrainParams } from "@/components/TrainParams";
@@ -29,16 +29,21 @@ export const Route = createFileRoute("/")({
 
 function IndexGuard() {
   const navigate = useNavigate();
+  const [checked, setChecked] = useState(false);
   const [authed, setAuthed] = useState(false);
 
-  if (typeof window !== "undefined" && !sessionStorage.getItem("demo_auth")) {
-    navigate({ to: "/login" });
-    return null;
-  }
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      if (sessionStorage.getItem("demo_auth")) {
+        setAuthed(true);
+      } else {
+        navigate({ to: "/login" });
+      }
+      setChecked(true);
+    }
+  }, [navigate]);
 
-  if (!authed && typeof window !== "undefined") {
-    setAuthed(true);
-  }
+  if (!checked || !authed) return null;
 
   return <IndexPage />;
 }
