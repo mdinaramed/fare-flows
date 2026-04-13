@@ -48,8 +48,7 @@ function IndexGuard() {
   return <IndexPage />;
 }
 
-function Index() {
-  const navigate = useNavigate();
+function IndexPage() {
 
   // Demo auth check
   if (typeof window !== "undefined" && !sessionStorage.getItem("demo_auth")) {
