@@ -1,12 +1,12 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { useState, useCallback } from "react";
+import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
+import { useState, useCallback, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { TrainSearch } from "@/components/TrainSearch";
 import { TrainParams } from "@/components/TrainParams";
 import { ExpenseTracker } from "@/components/ExpenseTracker";
 import { ResultsBlock } from "@/components/ResultsBlock";
 import { TariffSettingsBlock } from "@/components/TariffSettingsBlock";
-import { Calculator, ChevronDown, ChevronUp } from "lucide-react";
+import { Calculator, ChevronDown, ChevronUp, LogOut } from "lucide-react";
 import {
   type TrainInfo,
   type RouteType,
@@ -20,14 +20,36 @@ import {
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "РасходЖД — Калькулятор расходов пассажирских поездов" },
-      { name: "description", content: "Расчёт расходов пассажирских железнодорожных поездов. Замена Excel." },
+      { title: "EcoPlan Hub — Калькулятор расходов пассажирских поездов" },
+      { name: "description", content: "Расчёт расходов пассажирских железнодорожных поездов." },
     ],
   }),
-  component: Index,
+  component: IndexGuard,
 });
 
-function Index() {
+function IndexGuard() {
+  const navigate = useNavigate();
+  const [checked, setChecked] = useState(false);
+  const [authed, setAuthed] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      if (sessionStorage.getItem("demo_auth")) {
+        setAuthed(true);
+      } else {
+        navigate({ to: "/login" });
+      }
+      setChecked(true);
+    }
+  }, [navigate]);
+
+  if (!checked || !authed) return null;
+
+  return <IndexPage />;
+}
+
+function IndexPage() {
+
   const [train, setTrain] = useState<TrainInfo | null>(null);
   const [wagons, setWagons] = useState(10);
   const [routeType, setRouteType] = useState<RouteType>("social");
@@ -90,10 +112,20 @@ function Index() {
           <div className="h-9 w-9 rounded-lg bg-primary flex items-center justify-center">
             <span className="text-primary-foreground text-lg">🚂</span>
           </div>
-          <div>
-            <h1 className="text-lg font-bold text-foreground">РасходЖД</h1>
-            <p className="text-xs text-muted-foreground">Калькулятор расходов поездов</p>
+          <div className="flex-1">
+            <h1 className="text-lg font-bold text-foreground">EcoPlan Hub</h1>
+            <p className="text-xs text-muted-foreground">Система расчёта расходов поездов</p>
           </div>
+          <button
+            onClick={() => {
+              sessionStorage.removeItem("demo_auth");
+              window.location.href = "/login";
+            }}
+            className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <LogOut className="h-4 w-4" />
+            Выйти
+          </button>
         </div>
       </header>
 
