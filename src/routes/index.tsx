@@ -28,6 +28,14 @@ export const Route = createFileRoute("/")({
 });
 
 function Index() {
+  const navigate = useNavigate();
+
+  // Demo auth check
+  if (typeof window !== "undefined" && !sessionStorage.getItem("demo_auth")) {
+    navigate({ to: "/login" });
+    return null;
+  }
+
   const [train, setTrain] = useState<TrainInfo | null>(null);
   const [wagons, setWagons] = useState(10);
   const [routeType, setRouteType] = useState<RouteType>("social");
