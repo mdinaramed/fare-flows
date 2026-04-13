@@ -1,17 +1,22 @@
-import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState, useCallback, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { TrainSearch } from "@/components/TrainSearch";
 import { TrainParams } from "@/components/TrainParams";
 import { ExpenseTracker } from "@/components/ExpenseTracker";
 import { ResultsBlock } from "@/components/ResultsBlock";
-import { TariffSettingsBlock } from "@/components/TariffSettingsBlock";
-import { Calculator, ChevronDown, ChevronUp, LogOut } from "lucide-react";
+import { Calculator } from "lucide-react";
+import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import { AppSidebar } from "@/components/AppSidebar";
+import { canEdit, canCalculate } from "@/lib/roles";
 import {
   type TrainInfo,
   type RouteType,
+  type TrainType,
   type TariffSettings,
   type ExpenseItem,
+  type CalculationResult,
+  type CalculationParams,
   DEFAULT_TARIFFS,
   createDefaultExpenses,
   calculateExpenses,
@@ -20,8 +25,8 @@ import {
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "EcoPlan Hub — Калькулятор расходов пассажирских поездов" },
-      { name: "description", content: "Расчёт расходов пассажирских железнодорожных поездов." },
+      { title: "EcoPlan Hub — Расчёт расходов" },
+      { name: "description", content: "Система планирования и анализа расходов пассажирских поездов" },
     ],
   }),
   component: IndexGuard,
@@ -45,40 +50,62 @@ function IndexGuard() {
 
   if (!checked || !authed) return null;
 
-  return <IndexPage />;
+  return (
+    <SidebarProvider>
+      <div className="min-h-screen flex w-full">
+        <AppSidebar />
+        <div className="flex-1 flex flex-col min-w-0">
+          <header className="h-12 flex items-center border-b bg-card/80 backdrop-blur-sm sticky top-0 z-10 px-2">
+            <SidebarTrigger className="mr-2" />
+            <h1 className="text-sm font-semibold text-foreground">Расчёт расходов</h1>
+          </header>
+          <main className="flex-1 overflow-auto">
+            <IndexPage />
+          </main>
+        </div>
+      </div>
+    </SidebarProvider>
+  );
 }
 
 function IndexPage() {
+  const editAllowed = canEdit();
+  const calcAllowed = canCalculate();
 
   const [train, setTrain] = useState<TrainInfo | null>(null);
   const [wagons, setWagons] = useState(10);
+  const [passengers, setPassengers] = useState(360);
   const [routeType, setRouteType] = useState<RouteType>("social");
-  const [nightHours, setNightHours] = useState(4);
+  const [trainType, setTrainType] = useState<TrainType>("standard");
+  const [rollingStockMode, setRollingStockMode] = useState<"rent" | "depreciation">("rent");
   const [tariffs, setTariffs] = useState<TariffSettings>(DEFAULT_TARIFFS);
-  const [expenses, setExpenses] = useState<ExpenseItem[]>(() =>
-    createDefaultExpenses(DEFAULT_TARIFFS, 10)
+  const [expenses, setExpenses] = useState<ExpenseItem[]>([]);
+  const [results, setResults] = useState<CalculationResult | null>(null);
+
+  const getParams = useCallback(
+    (t: TrainInfo): CalculationParams => ({
+      wagons, passengers, routeType, trainType, rollingStockMode, train: t, tariffs,
+    }),
+    [wagons, passengers, routeType, trainType, rollingStockMode, tariffs]
   );
-  const [results, setResults] = useState<{ byGroup: Record<string, number>; total: number } | null>(null);
-  const [showSettings, setShowSettings] = useState(false);
 
-  const handleTrainFound = useCallback((t: TrainInfo) => {
-    setTrain(t);
-    setResults(null);
-  }, []);
+  const handleTrainFound = useCallback(
+    (t: TrainInfo) => {
+      setTrain(t);
+      setResults(null);
+      setExpenses(createDefaultExpenses({ wagons, passengers, routeType, trainType, rollingStockMode, train: t, tariffs }));
+    },
+    [wagons, passengers, routeType, trainType, rollingStockMode, tariffs]
+  );
 
-  const handleWagonsChange = useCallback(
-    (v: number) => {
-      setWagons(v);
-      setExpenses(createDefaultExpenses(tariffs, v));
+  const refreshExpenses = useCallback(
+    () => {
+      if (!train) return;
+      setExpenses(createDefaultExpenses(getParams(train)));
       setResults(null);
     },
-    [tariffs]
+    [train, getParams]
   );
-
-  const handleRouteTypeChange = useCallback((v: RouteType) => {
-    setRouteType(v);
-    setResults(null);
-  }, []);
 
   const handleExpenseChange = useCallback(
     (id: string, field: keyof ExpenseItem, value: unknown) => {
@@ -90,109 +117,64 @@ function IndexPage() {
     []
   );
 
-  const handleTariffChange = useCallback(
-    (key: keyof TariffSettings, value: number) => {
-      const newTariffs = { ...tariffs, [key]: value };
-      setTariffs(newTariffs);
-      setExpenses(createDefaultExpenses(newTariffs, wagons));
-      setResults(null);
-    },
-    [tariffs, wagons]
-  );
-
   const handleCalculate = useCallback(() => {
-    const res = calculateExpenses(expenses, routeType, nightHours);
+    if (!train) return;
+    const res = calculateExpenses(expenses, getParams(train));
     setResults(res);
-  }, [expenses, routeType, nightHours]);
+  }, [expenses, train, getParams]);
+
+  // Refresh expenses when params change
+  useEffect(() => {
+    if (train) refreshExpenses();
+  }, [wagons, passengers, routeType, trainType, rollingStockMode, tariffs]);
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="border-b bg-card/80 backdrop-blur-sm sticky top-0 z-10">
-        <div className="max-w-2xl mx-auto px-4 py-4 flex items-center gap-3">
-          <div className="h-9 w-9 rounded-lg bg-primary flex items-center justify-center">
-            <span className="text-primary-foreground text-lg">🚂</span>
-          </div>
-          <div className="flex-1">
-            <h1 className="text-lg font-bold text-foreground">EcoPlan Hub</h1>
-            <p className="text-xs text-muted-foreground">Система расчёта расходов поездов</p>
-          </div>
-          <button
-            onClick={() => {
-              sessionStorage.removeItem("demo_auth");
-              window.location.href = "/login";
-            }}
-            className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
-          >
-            <LogOut className="h-4 w-4" />
-            Выйти
-          </button>
-        </div>
-      </header>
+    <div className="max-w-2xl mx-auto px-4 py-6 space-y-4">
+      <TrainSearch onTrainFound={handleTrainFound} />
 
-      <main className="max-w-2xl mx-auto px-4 py-6 space-y-4">
-        {/* Step 1: Train Search */}
-        <TrainSearch onTrainFound={handleTrainFound} />
+      {train && (
+        <>
+          <TrainParams
+            wagons={wagons}
+            passengers={passengers}
+            routeType={routeType}
+            trainType={trainType}
+            rollingStockMode={rollingStockMode}
+            onWagonsChange={setWagons}
+            onPassengersChange={setPassengers}
+            onRouteTypeChange={setRouteType}
+            onTrainTypeChange={setTrainType}
+            onRollingStockModeChange={setRollingStockMode}
+            disabled={!editAllowed}
+          />
 
-        {train && (
-          <>
-            {/* Step 2: Parameters */}
-            <TrainParams
-              wagons={wagons}
-              routeType={routeType}
-              onWagonsChange={handleWagonsChange}
-              onRouteTypeChange={handleRouteTypeChange}
-            />
+          <ExpenseTracker
+            expenses={expenses}
+            onExpenseChange={handleExpenseChange}
+            disabled={!editAllowed}
+          />
 
-            {/* Step 3: Expense Tracker */}
-            <ExpenseTracker
-              expenses={expenses}
-              nightHours={nightHours}
-              onExpenseChange={handleExpenseChange}
-              onNightHoursChange={setNightHours}
-            />
-
-            {/* Calculate Button */}
-            <Button
-              onClick={handleCalculate}
-              className="w-full h-14 text-lg font-semibold gap-2"
-              size="lg"
-            >
+          {calcAllowed && (
+            <Button onClick={handleCalculate} className="w-full h-14 text-lg font-semibold gap-2" size="lg">
               <Calculator className="h-5 w-5" />
               Рассчитать расходы
             </Button>
+          )}
 
-            {/* Step 4: Results */}
-            {results && (
-              <div className="animate-in fade-in-50 slide-in-from-bottom-4 duration-500">
-                <ResultsBlock byGroup={results.byGroup} total={results.total} />
-              </div>
-            )}
-
-            {/* Settings */}
-            <div>
-              <button
-                onClick={() => setShowSettings(!showSettings)}
-                className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors mx-auto"
-              >
-                {showSettings ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-                Настройки тарифов
-              </button>
-              {showSettings && (
-                <div className="mt-3 animate-in fade-in-50 duration-300">
-                  <TariffSettingsBlock tariffs={tariffs} onTariffChange={handleTariffChange} />
-                </div>
-              )}
+          {results && (
+            <div className="animate-in fade-in-50 slide-in-from-bottom-4 duration-500">
+              <ResultsBlock results={results} wagons={wagons} passengers={passengers} />
             </div>
-          </>
-        )}
+          )}
+        </>
+      )}
 
-        {!train && (
-          <div className="text-center py-12 text-muted-foreground">
-            <p className="text-sm">Введите номер поезда для начала работы</p>
-            <p className="text-xs mt-1">Доступны: T009, T001, T005</p>
-          </div>
-        )}
-      </main>
+      {!train && (
+        <div className="text-center py-12 text-muted-foreground">
+          <p className="text-sm">Введите номер поезда или направление для начала работы</p>
+          <p className="text-xs mt-1">Доступны: T009, T001, T005</p>
+        </div>
+      )}
     </div>
   );
 }
