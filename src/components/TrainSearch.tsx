@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Search, Train, Clock, MapPin } from "lucide-react";
+import { Search, Train, Clock, MapPin, Moon } from "lucide-react";
 import { findTrain, type TrainInfo } from "@/lib/train-data";
 
 interface TrainSearchProps {
@@ -40,7 +40,7 @@ export function TrainSearch({ onTrainFound }: TrainSearchProps) {
         <div className="relative">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
-            placeholder="Введите номер поезда, например: T009"
+            placeholder="Номер поезда или направление (T009, Алматы...)"
             value={query}
             onChange={(e) => handleSearch(e.target.value)}
             className="pl-10 h-12 text-base"
@@ -48,7 +48,7 @@ export function TrainSearch({ onTrainFound }: TrainSearchProps) {
         </div>
 
         {notFound && (
-          <p className="text-sm text-destructive">Поезд не найден. Попробуйте: T009, T001, T005</p>
+          <p className="text-sm text-destructive">Поезд не найден. Попробуйте: T009, T001, T005 или название города</p>
         )}
 
         {train && (
@@ -58,10 +58,18 @@ export function TrainSearch({ onTrainFound }: TrainSearchProps) {
                 <p className="text-xl font-bold text-foreground">{train.route}</p>
                 <p className="text-sm text-muted-foreground">Поезд №{train.number}</p>
               </div>
-              <Badge variant="secondary" className="gap-1">
-                <Clock className="h-3 w-3" />
-                {train.duration}
-              </Badge>
+              <div className="flex gap-2">
+                <Badge variant="secondary" className="gap-1">
+                  <Clock className="h-3 w-3" />
+                  {train.duration}
+                </Badge>
+                {train.nightHours > 0 && (
+                  <Badge variant="outline" className="gap-1">
+                    <Moon className="h-3 w-3" />
+                    {train.nightHours}ч ночных
+                  </Badge>
+                )}
+              </div>
             </div>
 
             <div className="rounded-lg bg-muted/50 p-4">
