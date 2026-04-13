@@ -39,6 +39,10 @@ export const Route = createRootRoute({
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
       { name: "twitter:site", content: "@Lovable" },
+      { name: "twitter:title", content: "EcoPlan Hub — Система планирования расходов" },
+      { name: "twitter:description", content: "Система планирования и анализа расходов пассажирских поездов" },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/2e901a8e-58a9-4091-ae80-6d8c064e96db/id-preview-cf4b7c3a--2e354e1d-9cda-4ec3-af1d-c09221d2a30d.lovable.app-1776080088990.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/2e901a8e-58a9-4091-ae80-6d8c064e96db/id-preview-cf4b7c3a--2e354e1d-9cda-4ec3-af1d-c09221d2a30d.lovable.app-1776080088990.png" },
     ],
     links: [
       {
