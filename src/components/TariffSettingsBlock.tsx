@@ -9,42 +9,79 @@ interface TariffSettingsProps {
   onTariffChange: (key: keyof TariffSettings, value: number) => void;
 }
 
-const TARIFF_LABELS: { key: keyof TariffSettings; label: string }[] = [
-  { key: "mzs", label: "МЖС" },
-  { key: "water", label: "Вода" },
-  { key: "fuel", label: "Топливо" },
-  { key: "fot", label: "ФОТ (за сотрудника)" },
-  { key: "cleaning", label: "Клининг" },
-  { key: "sanitation", label: "Ассенизация" },
-  { key: "rent", label: "Аренда вагона" },
-  { key: "depreciation", label: "Амортизация" },
-  { key: "linen", label: "Бельё" },
+const TARIFF_GROUPS = [
+  {
+    title: "Основные тарифы",
+    items: [
+      { key: "mzs" as const, label: "МЖС" },
+      { key: "water" as const, label: "Вода (техническая)" },
+      { key: "fuel" as const, label: "Топливо" },
+      { key: "drinkWater" as const, label: "Вода (питьевая)" },
+    ],
+  },
+  {
+    title: "Станционные",
+    items: [
+      { key: "cleaning" as const, label: "Клининг" },
+      { key: "sanitation" as const, label: "Ассенизация" },
+      { key: "disinfection" as const, label: "Дезинфекция" },
+      { key: "deratization" as const, label: "Дератизация" },
+      { key: "disinsection" as const, label: "Дезинсекция" },
+    ],
+  },
+  {
+    title: "Подвижной состав и ФОТ",
+    items: [
+      { key: "rent" as const, label: "Аренда вагона" },
+      { key: "depreciation" as const, label: "Амортизация" },
+      { key: "fot" as const, label: "ФОТ (за сотрудника)" },
+    ],
+  },
+  {
+    title: "Расходники",
+    items: [
+      { key: "linen" as const, label: "Бельё" },
+      { key: "supplies" as const, label: "Расходные материалы" },
+      { key: "inventory" as const, label: "Инвентарь" },
+    ],
+  },
+  {
+    title: "Нормативы",
+    items: [
+      { key: "staffPerWagon" as const, label: "Проводников на вагон" },
+      { key: "nightCoefficient" as const, label: "Ночной коэффициент" },
+    ],
+  },
 ];
 
 export function TariffSettingsBlock({ tariffs, onTariffChange }: TariffSettingsProps) {
   return (
-    <Card className="border-dashed">
-      <CardHeader className="pb-3">
-        <CardTitle className="flex items-center gap-2 text-lg">
-          <Wrench className="h-5 w-5 text-muted-foreground" />
-          Настройки тарифов
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-          {TARIFF_LABELS.map(({ key, label }) => (
-            <div key={key}>
-              <Label className="text-xs text-muted-foreground">{label}</Label>
-              <Input
-                type="number"
-                value={tariffs[key]}
-                onChange={(e) => onTariffChange(key, parseFloat(e.target.value) || 0)}
-                className="h-9 text-sm mt-1"
-              />
+    <div className="space-y-6">
+      {TARIFF_GROUPS.map((group) => (
+        <Card key={group.title}>
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Wrench className="h-4 w-4 text-muted-foreground" />
+              {group.title}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+              {group.items.map(({ key, label }) => (
+                <div key={key}>
+                  <Label className="text-xs text-muted-foreground">{label}</Label>
+                  <Input
+                    type="number"
+                    value={tariffs[key]}
+                    onChange={(e) => onTariffChange(key, parseFloat(e.target.value) || 0)}
+                    className="h-9 text-sm mt-1"
+                  />
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
-      </CardContent>
-    </Card>
+          </CardContent>
+        </Card>
+      ))}
+    </div>
   );
 }

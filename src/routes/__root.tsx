@@ -31,11 +31,11 @@ export const Route = createRootRoute({
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "РасходЖД — Калькулятор расходов поездов" },
-      { name: "description", content: "Расчёт расходов пассажирских железнодорожных поездов" },
-      { name: "author", content: "РасходЖД" },
-      { property: "og:title", content: "РасходЖД — Калькулятор расходов поездов" },
-      { property: "og:description", content: "Расчёт расходов пассажирских железнодорожных поездов" },
+      { title: "EcoPlan Hub — Система планирования расходов" },
+      { name: "description", content: "Система планирования и анализа расходов пассажирских поездов" },
+      { name: "author", content: "EcoPlan Hub" },
+      { property: "og:title", content: "EcoPlan Hub — Система планирования расходов" },
+      { property: "og:description", content: "Система планирования и анализа расходов пассажирских поездов" },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
       { name: "twitter:site", content: "@Lovable" },
@@ -54,7 +54,7 @@ export const Route = createRootRoute({
 
 function RootShell({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="ru">
       <head>
         <HeadContent />
       </head>
