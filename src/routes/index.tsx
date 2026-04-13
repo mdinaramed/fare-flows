@@ -20,12 +20,28 @@ import {
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "РасходЖД — Калькулятор расходов пассажирских поездов" },
-      { name: "description", content: "Расчёт расходов пассажирских железнодорожных поездов. Замена Excel." },
+      { title: "EcoPlan Hub — Калькулятор расходов пассажирских поездов" },
+      { name: "description", content: "Расчёт расходов пассажирских железнодорожных поездов." },
     ],
   }),
-  component: Index,
+  component: IndexGuard,
 });
+
+function IndexGuard() {
+  const navigate = useNavigate();
+  const [authed, setAuthed] = useState(false);
+
+  if (typeof window !== "undefined" && !sessionStorage.getItem("demo_auth")) {
+    navigate({ to: "/login" });
+    return null;
+  }
+
+  if (!authed && typeof window !== "undefined") {
+    setAuthed(true);
+  }
+
+  return <IndexPage />;
+}
 
 function Index() {
   const navigate = useNavigate();
