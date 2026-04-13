@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useState, useCallback, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { TrainSearch } from "@/components/TrainSearch";
@@ -6,7 +6,7 @@ import { TrainParams } from "@/components/TrainParams";
 import { ExpenseTracker } from "@/components/ExpenseTracker";
 import { ResultsBlock } from "@/components/ResultsBlock";
 import { TariffSettingsBlock } from "@/components/TariffSettingsBlock";
-import { Calculator, ChevronDown, ChevronUp } from "lucide-react";
+import { Calculator, ChevronDown, ChevronUp, LogOut } from "lucide-react";
 import {
   type TrainInfo,
   type RouteType,
@@ -112,10 +112,20 @@ function IndexPage() {
           <div className="h-9 w-9 rounded-lg bg-primary flex items-center justify-center">
             <span className="text-primary-foreground text-lg">🚂</span>
           </div>
-          <div>
-            <h1 className="text-lg font-bold text-foreground">РасходЖД</h1>
-            <p className="text-xs text-muted-foreground">Калькулятор расходов поездов</p>
+          <div className="flex-1">
+            <h1 className="text-lg font-bold text-foreground">EcoPlan Hub</h1>
+            <p className="text-xs text-muted-foreground">Система расчёта расходов поездов</p>
           </div>
+          <button
+            onClick={() => {
+              sessionStorage.removeItem("demo_auth");
+              window.location.href = "/login";
+            }}
+            className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <LogOut className="h-4 w-4" />
+            Выйти
+          </button>
         </div>
       </header>
 
