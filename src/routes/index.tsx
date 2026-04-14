@@ -3,9 +3,12 @@ import { useState, useCallback, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { TrainSearch } from "@/components/TrainSearch";
 import { TrainParams } from "@/components/TrainParams";
+import { ProductionBlock } from "@/components/ProductionBlock";
+import { RevenueBlock } from "@/components/RevenueBlock";
 import { ExpenseTracker } from "@/components/ExpenseTracker";
 import { ResultsBlock } from "@/components/ResultsBlock";
-import { Calculator } from "lucide-react";
+import { FinancialResultBlock } from "@/components/FinancialResultBlock";
+import { Calculator, Save, Download } from "lucide-react";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { canEdit, canCalculate } from "@/lib/roles";
@@ -17,9 +20,17 @@ import {
   type ExpenseItem,
   type CalculationResult,
   type CalculationParams,
+  type WagonTypeRow,
+  type RevenueData,
+  type ProductionMetrics,
+  type FinancialSummary,
   DEFAULT_TARIFFS,
+  DEFAULT_WAGON_TYPES,
   createDefaultExpenses,
   calculateExpenses,
+  calcProductionMetrics,
+  calcRevenue,
+  calcFinancialResult,
 } from "@/lib/train-data";
 
 export const Route = createFileRoute("/")({
@@ -73,8 +84,6 @@ function IndexPage() {
   const calcAllowed = canCalculate();
 
   const [train, setTrain] = useState<TrainInfo | null>(null);
-  const [wagons, setWagons] = useState(10);
-  const [passengers, setPassengers] = useState(360);
   const [routeType, setRouteType] = useState<RouteType>("social");
   const [trainType, setTrainType] = useState<TrainType>("standard");
   const [rollingStockMode, setRollingStockMode] = useState<"rent" | "depreciation">("rent");
@@ -82,51 +91,79 @@ function IndexPage() {
   const [expenses, setExpenses] = useState<ExpenseItem[]>([]);
   const [results, setResults] = useState<CalculationResult | null>(null);
 
+  // Production
+  const [wagonTypes, setWagonTypes] = useState<WagonTypeRow[]>(DEFAULT_WAGON_TYPES);
+  const [occupancy, setOccupancy] = useState(70);
+
+  // Revenue
+  const [revenue, setRevenue] = useState<RevenueData>({
+    ticketPrice: 8500,
+    passengers: 360,
+    linenPrice: 1200,
+    linenPassengers: 280,
+    subsidy: 0,
+  });
+
+  // Financial
+  const [financial, setFinancial] = useState<FinancialSummary | null>(null);
+
+  const prodMetrics: ProductionMetrics = train
+    ? calcProductionMetrics(wagonTypes, train.distanceKm, occupancy)
+    : { totalWagons: 0, totalSeats: 0, mileageThousKm: 0, seatTurnover: 0, occupancyPercent: 0, passengerTurnover: 0, avgDistance: 0 };
+
+  const totalWagons = wagonTypes.reduce((s, w) => s + w.count, 0);
+  const totalPassengers = Math.round(prodMetrics.totalSeats * (occupancy / 100));
+
   const getParams = useCallback(
     (t: TrainInfo): CalculationParams => ({
-      wagons, passengers, routeType, trainType, rollingStockMode, train: t, tariffs,
+      wagons: totalWagons, passengers: totalPassengers, routeType, trainType, rollingStockMode, train: t, tariffs,
     }),
-    [wagons, passengers, routeType, trainType, rollingStockMode, tariffs]
+    [totalWagons, totalPassengers, routeType, trainType, rollingStockMode, tariffs]
   );
 
   const handleTrainFound = useCallback(
     (t: TrainInfo) => {
       setTrain(t);
       setResults(null);
-      setExpenses(createDefaultExpenses({ wagons, passengers, routeType, trainType, rollingStockMode, train: t, tariffs }));
+      setFinancial(null);
+      setExpenses(createDefaultExpenses({ wagons: totalWagons, passengers: totalPassengers, routeType, trainType, rollingStockMode, train: t, tariffs }));
     },
-    [wagons, passengers, routeType, trainType, rollingStockMode, tariffs]
+    [totalWagons, totalPassengers, routeType, trainType, rollingStockMode, tariffs]
   );
 
-  const refreshExpenses = useCallback(
-    () => {
-      if (!train) return;
-      setExpenses(createDefaultExpenses(getParams(train)));
-      setResults(null);
-    },
-    [train, getParams]
-  );
+  const refreshExpenses = useCallback(() => {
+    if (!train) return;
+    setExpenses(createDefaultExpenses(getParams(train)));
+    setResults(null);
+    setFinancial(null);
+  }, [train, getParams]);
 
-  const handleExpenseChange = useCallback(
-    (id: string, field: keyof ExpenseItem, value: unknown) => {
-      setExpenses((prev) =>
-        prev.map((e) => (e.id === id ? { ...e, [field]: value } : e))
-      );
-      setResults(null);
-    },
-    []
-  );
+  const handleExpenseChange = useCallback((id: string, field: keyof ExpenseItem, value: unknown) => {
+    setExpenses((prev) => prev.map((e) => (e.id === id ? { ...e, [field]: value } : e)));
+    setResults(null);
+    setFinancial(null);
+  }, []);
+
+  const handleWagonChange = useCallback((id: string, field: keyof WagonTypeRow, value: number) => {
+    setWagonTypes((prev) => prev.map((w) => (w.id === id ? { ...w, [field]: value } : w)));
+  }, []);
+
+  const handleRevenueChange = useCallback((field: keyof RevenueData, value: number) => {
+    setRevenue((prev) => ({ ...prev, [field]: value }));
+    setFinancial(null);
+  }, []);
 
   const handleCalculate = useCallback(() => {
     if (!train) return;
     const res = calculateExpenses(expenses, getParams(train));
     setResults(res);
-  }, [expenses, train, getParams]);
+    const { totalRevenue } = calcRevenue(revenue);
+    setFinancial(calcFinancialResult(totalRevenue, res.total));
+  }, [expenses, train, getParams, revenue]);
 
-  // Refresh expenses when params change
   useEffect(() => {
     if (train) refreshExpenses();
-  }, [wagons, passengers, routeType, trainType, rollingStockMode, tariffs]);
+  }, [totalWagons, totalPassengers, routeType, trainType, rollingStockMode, tariffs]);
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-6 space-y-4">
@@ -135,35 +172,46 @@ function IndexPage() {
       {train && (
         <>
           <TrainParams
-            wagons={wagons}
-            passengers={passengers}
-            routeType={routeType}
-            trainType={trainType}
-            rollingStockMode={rollingStockMode}
-            onWagonsChange={setWagons}
-            onPassengersChange={setPassengers}
-            onRouteTypeChange={setRouteType}
-            onTrainTypeChange={setTrainType}
+            wagons={totalWagons} passengers={totalPassengers}
+            routeType={routeType} trainType={trainType} rollingStockMode={rollingStockMode}
+            onWagonsChange={() => {}} onPassengersChange={() => {}}
+            onRouteTypeChange={setRouteType} onTrainTypeChange={setTrainType}
             onRollingStockModeChange={setRollingStockMode}
             disabled={!editAllowed}
           />
 
-          <ExpenseTracker
-            expenses={expenses}
-            onExpenseChange={handleExpenseChange}
+          <ProductionBlock
+            wagonTypes={wagonTypes} onWagonChange={handleWagonChange}
+            metrics={prodMetrics} occupancy={occupancy} onOccupancyChange={setOccupancy}
             disabled={!editAllowed}
           />
+
+          <RevenueBlock revenue={revenue} onRevenueChange={handleRevenueChange} disabled={!editAllowed} />
+
+          <ExpenseTracker expenses={expenses} onExpenseChange={handleExpenseChange} disabled={!editAllowed} />
 
           {calcAllowed && (
             <Button onClick={handleCalculate} className="w-full h-14 text-lg font-semibold gap-2" size="lg">
               <Calculator className="h-5 w-5" />
-              Рассчитать расходы
+              Рассчитать
             </Button>
           )}
 
           {results && (
-            <div className="animate-in fade-in-50 slide-in-from-bottom-4 duration-500">
-              <ResultsBlock results={results} wagons={wagons} passengers={passengers} />
+            <div className="animate-in fade-in-50 slide-in-from-bottom-4 duration-500 space-y-4">
+              <ResultsBlock results={results} wagons={totalWagons} passengers={totalPassengers} />
+              {financial && <FinancialResultBlock summary={financial} />}
+
+              <div className="flex gap-2">
+                <Button variant="outline" className="flex-1 gap-2" onClick={() => alert("Расчёт сохранён (демо)")}>
+                  <Save className="h-4 w-4" />
+                  Сохранить расчёт
+                </Button>
+                <Button variant="outline" className="flex-1 gap-2" onClick={() => alert("Скачивание отчёта (демо)")}>
+                  <Download className="h-4 w-4" />
+                  Скачать отчёт
+                </Button>
+              </div>
             </div>
           )}
         </>

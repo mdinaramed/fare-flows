@@ -7,7 +7,7 @@ const GROUP_COLORS: Record<string, string> = {
   "МЖС": "bg-chart-1",
   "Станционные": "bg-chart-2",
   "Подвижной состав": "bg-chart-3",
-  "ФОТ": "bg-chart-4",
+  "Форма персонала": "bg-chart-4",
   "Расходники": "bg-chart-5",
 };
 
@@ -22,7 +22,6 @@ export function ResultsBlock({ results, wagons, passengers }: ResultsBlockProps)
 
   return (
     <div className="space-y-4">
-      {/* Anomalies */}
       {results.anomalies.length > 0 && (
         <Card className="border-2 border-destructive/30 bg-destructive/5">
           <CardContent className="py-4 space-y-2">
@@ -36,12 +35,11 @@ export function ResultsBlock({ results, wagons, passengers }: ResultsBlockProps)
         </Card>
       )}
 
-      {/* Main results */}
-      <Card className="border-2 border-success/30">
+      <Card className="border-2 border-primary/30">
         <CardHeader className="pb-3">
           <CardTitle className="flex items-center gap-2 text-lg">
-            <BarChart3 className="h-5 w-5 text-success" />
-            Результат расчёта
+            <BarChart3 className="h-5 w-5 text-primary" />
+            Расходы по категориям
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -62,10 +60,9 @@ export function ResultsBlock({ results, wagons, passengers }: ResultsBlockProps)
             ))}
           </div>
 
-          {/* Summary cards */}
           <div className="grid grid-cols-3 gap-3 mt-4">
             <div className="rounded-xl bg-primary/10 p-3 text-center">
-              <p className="text-[10px] text-muted-foreground uppercase">Итого</p>
+              <p className="text-[10px] text-muted-foreground uppercase">Итого расходы</p>
               <p className="text-lg font-bold text-primary">
                 {results.total.toLocaleString("ru-RU")} ₸
               </p>
@@ -84,7 +81,6 @@ export function ResultsBlock({ results, wagons, passengers }: ResultsBlockProps)
             </div>
           </div>
 
-          {/* Plan vs Fact */}
           {results.planVsFact.length > 0 && (
             <div className="mt-4">
               <p className="text-xs font-semibold text-muted-foreground mb-2 uppercase tracking-wide">
@@ -102,13 +98,8 @@ export function ResultsBlock({ results, wagons, passengers }: ResultsBlockProps)
                         variant={pv.deviation > 0 ? "destructive" : "secondary"}
                         className="text-[10px] gap-0.5"
                       >
-                        {pv.deviation > 0 ? (
-                          <TrendingUp className="h-3 w-3" />
-                        ) : (
-                          <TrendingDown className="h-3 w-3" />
-                        )}
-                        {pv.deviation > 0 ? "+" : ""}
-                        {pv.deviation.toLocaleString("ru-RU")} ₸
+                        {pv.deviation > 0 ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
+                        {pv.deviation > 0 ? "+" : ""}{pv.deviation.toLocaleString("ru-RU")} ₸
                       </Badge>
                     </div>
                   </div>

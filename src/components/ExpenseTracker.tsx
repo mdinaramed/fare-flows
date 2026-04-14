@@ -8,7 +8,7 @@ const GROUP_CONFIG: Record<string, { icon: string; color: string }> = {
   "МЖС": { icon: "🏛️", color: "border-chart-1/30 bg-chart-1/5" },
   "Станционные": { icon: "🚉", color: "border-chart-2/30 bg-chart-2/5" },
   "Подвижной состав": { icon: "🚃", color: "border-chart-3/30 bg-chart-3/5" },
-  "ФОТ": { icon: "👷", color: "border-chart-4/30 bg-chart-4/5" },
+  "Форма персонала": { icon: "👔", color: "border-chart-4/30 bg-chart-4/5" },
   "Расходники": { icon: "📦", color: "border-chart-5/30 bg-chart-5/5" },
 };
 
