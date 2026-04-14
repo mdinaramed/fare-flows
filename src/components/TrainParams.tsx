@@ -1,5 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Settings2 } from "lucide-react";
 import type { RouteType, TrainType } from "@/lib/train-data";
@@ -20,37 +20,24 @@ interface TrainParamsProps {
 
 export function TrainParams({
   wagons, passengers, routeType, trainType, rollingStockMode,
-  onWagonsChange, onPassengersChange, onRouteTypeChange, onTrainTypeChange, onRollingStockModeChange,
+  onRouteTypeChange, onTrainTypeChange, onRollingStockModeChange,
   disabled,
 }: TrainParamsProps) {
   return (
     <Card>
       <CardHeader className="pb-3">
-        <CardTitle className="flex items-center gap-2 text-lg">
-          <Settings2 className="h-5 w-5 text-primary" />
-          Параметры расчёта
+        <CardTitle className="flex items-center justify-between text-lg">
+          <span className="flex items-center gap-2">
+            <Settings2 className="h-5 w-5 text-primary" />
+            Параметры расчёта
+          </span>
+          <div className="flex gap-2">
+            <Badge variant="outline" className="text-xs">{wagons} ваг.</Badge>
+            <Badge variant="outline" className="text-xs">{passengers} пасс.</Badge>
+          </div>
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <Label className="text-sm font-medium mb-1.5 block">Вагонов</Label>
-            <Input
-              type="number" min={1} max={30} value={wagons}
-              onChange={(e) => onWagonsChange(Math.max(1, parseInt(e.target.value) || 1))}
-              className="h-12 text-base" disabled={disabled}
-            />
-          </div>
-          <div>
-            <Label className="text-sm font-medium mb-1.5 block">Пассажиров</Label>
-            <Input
-              type="number" min={1} max={2000} value={passengers}
-              onChange={(e) => onPassengersChange(Math.max(1, parseInt(e.target.value) || 1))}
-              className="h-12 text-base" disabled={disabled}
-            />
-          </div>
-        </div>
-
         <div>
           <Label className="text-sm font-medium mb-1.5 block">Тип маршрута</Label>
           <div className="grid grid-cols-2 gap-2">
