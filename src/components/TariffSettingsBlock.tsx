@@ -30,11 +30,17 @@ const TARIFF_GROUPS = [
     ],
   },
   {
-    title: "Подвижной состав и ФОТ",
+    title: "Подвижной состав",
     items: [
       { key: "rent" as const, label: "Аренда вагона" },
       { key: "depreciation" as const, label: "Амортизация" },
-      { key: "fot" as const, label: "ФОТ (за сотрудника)" },
+    ],
+  },
+  {
+    title: "Форма персонала",
+    items: [
+      { key: "uniformSummer" as const, label: "Форма (летняя)" },
+      { key: "uniformWinter" as const, label: "Форма (зимняя)" },
     ],
   },
   {
