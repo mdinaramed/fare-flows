@@ -166,7 +166,7 @@ function AnalyticsPage() {
                 cy="50%"
                 outerRadius={100}
                 dataKey="value"
-                label={({ name, percent }: { name: string; percent: number }) => `${name} (${(percent * 100).toFixed(0)}%)`}
+                label={({ name, percent }: Record<string, unknown>) => `${name ?? ""} (${((Number(percent) || 0) * 100).toFixed(0)}%)`}
                 labelLine={false}
               >
                 {expenseBreakdown.map((_, i) => (
