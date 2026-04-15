@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { BarChart3, PieChart as PieChartIcon } from "lucide-react";
 import { loadCalculations, type SavedCalculation } from "@/lib/train-data";
+import type { PieLabelRenderProps } from "recharts";
 import {
   PieChart,
   Pie,
@@ -166,7 +167,7 @@ function AnalyticsPage() {
                 cy="50%"
                 outerRadius={100}
                 dataKey="value"
-                label={({ name, percent }: Record<string, unknown>) => `${name ?? ""} (${((Number(percent) || 0) * 100).toFixed(0)}%)`}
+                label={(props: PieLabelRenderProps) => `${props.name ?? ""} (${((Number(props.percent) || 0) * 100).toFixed(0)}%)`}
                 labelLine={false}
               >
                 {expenseBreakdown.map((_, i) => (
