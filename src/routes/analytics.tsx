@@ -166,14 +166,14 @@ function AnalyticsPage() {
                 cy="50%"
                 outerRadius={100}
                 dataKey="value"
-                label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
+                label={({ name, percent }: { name: string; percent: number }) => `${name} (${(percent * 100).toFixed(0)}%)`}
                 labelLine={false}
               >
                 {expenseBreakdown.map((_, i) => (
                   <Cell key={i} fill={COLORS[i % COLORS.length]} />
                 ))}
               </Pie>
-              <Tooltip formatter={(v: number) => `${v.toLocaleString("ru-RU")} ₸`} />
+              <Tooltip formatter={(v) => `${Number(v).toLocaleString("ru-RU")} ₸`} />
             </PieChart>
           </ResponsiveContainer>
         </CardContent>
@@ -194,7 +194,7 @@ function AnalyticsPage() {
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="train" fontSize={12} />
                 <YAxis fontSize={10} tickFormatter={(v) => `${(v / 1000).toFixed(0)}к`} />
-                <Tooltip formatter={(v: number) => `${v.toLocaleString("ru-RU")} ₸`} />
+                <Tooltip formatter={(v) => `${Number(v).toLocaleString("ru-RU")} ₸`} />
                 <Legend />
                 <Bar dataKey="revenue" name="Доходы" fill="#228b22" radius={[4, 4, 0, 0]} />
                 <Bar dataKey="expenses" name="Расходы" fill="#b22222" radius={[4, 4, 0, 0]} />

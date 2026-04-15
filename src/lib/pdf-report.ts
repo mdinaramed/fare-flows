@@ -7,7 +7,6 @@ export function generatePdfReport(calc: SavedCalculation, type: "full" | "cost" 
   const titles = { full: "Отчёт по рейсу", cost: "Себестоимость рейса", executive: "Отчёт для руководства" };
   let y = 15;
 
-  // Header
   doc.setFontSize(18);
   doc.setTextColor(30, 60, 120);
   doc.text("EcoPlan Hub", 14, y);
@@ -17,134 +16,130 @@ export function generatePdfReport(calc: SavedCalculation, type: "full" | "cost" 
   doc.text(titles[type], 14, y);
   y += 6;
   doc.setFontSize(9);
-  doc.text(`Дата: ${new Date(calc.date).toLocaleDateString("ru-RU")}`, 14, y);
+  doc.text(`Data: ${new Date(calc.date).toLocaleDateString("ru-RU")}`, 14, y);
   y += 10;
 
-  // Separator
   doc.setDrawColor(200);
   doc.line(14, y, 196, y);
   y += 8;
 
-  // Train info
   doc.setFontSize(11);
   doc.setTextColor(0);
-  doc.text(`Поезд №${calc.trainNumber}`, 14, y);
+  doc.text(`Train #${calc.trainNumber}`, 14, y);
   y += 6;
   doc.setFontSize(9);
   doc.setTextColor(80, 80, 80);
-  doc.text(`Маршрут: ${calc.trainRoute}`, 14, y);
+  doc.text(`${calc.trainRoute}`, 14, y);
   y += 5;
-  doc.text(`Время в пути: ${calc.trainInfo.duration} | Расстояние: ${calc.trainInfo.distanceKm} км | Вагонов: ${calc.productionMetrics.totalWagons}`, 14, y);
+  doc.text(`${calc.trainInfo.duration} | ${calc.trainInfo.distanceKm} km | ${calc.productionMetrics.totalWagons} wagons`, 14, y);
   y += 10;
 
-  // Production metrics (full only)
   if (type === "full") {
     doc.setFontSize(11);
     doc.setTextColor(30, 60, 120);
-    doc.text("Производственные показатели", 14, y);
+    doc.text("Production Metrics", 14, y);
     y += 6;
 
     autoTable(doc, {
       startY: y,
-      head: [["Показатель", "Значение"]],
+      head: [["Metric", "Value"]],
       body: [
-        ["Вагонов", String(calc.productionMetrics.totalWagons)],
-        ["Мест", String(calc.productionMetrics.totalSeats)],
-        ["Пробег (тыс. ваг.км)", calc.productionMetrics.mileageThousKm.toFixed(1)],
-        ["Местооборот (тыс. мест.км)", calc.productionMetrics.seatTurnover.toFixed(1)],
-        ["Вместимость", `${calc.productionMetrics.occupancyPercent}%`],
-        ["Пассажирооборот", calc.productionMetrics.passengerTurnover.toFixed(1)],
+        ["Wagons", String(calc.productionMetrics.totalWagons)],
+        ["Seats", String(calc.productionMetrics.totalSeats)],
+        ["Mileage (thous. wag-km)", calc.productionMetrics.mileageThousKm.toFixed(1)],
+        ["Seat turnover (thous.)", calc.productionMetrics.seatTurnover.toFixed(1)],
+        ["Occupancy", `${calc.productionMetrics.occupancyPercent}%`],
+        ["Passenger turnover", calc.productionMetrics.passengerTurnover.toFixed(1)],
       ],
       theme: "grid",
       headStyles: { fillColor: [30, 60, 120], fontSize: 9 },
       bodyStyles: { fontSize: 9 },
       margin: { left: 14 },
     });
-    y = (doc as unknown as Record<string, number>).lastAutoTable?.finalY + 10 || y + 50;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    y = ((doc as any).lastAutoTable?.finalY ?? y + 50) + 10;
   }
 
-  // Revenue (full & executive)
   if (type === "full" || type === "executive") {
     doc.setFontSize(11);
     doc.setTextColor(30, 60, 120);
-    doc.text("Доходы", 14, y);
+    doc.text("Revenue", 14, y);
     y += 6;
 
-    const revenueRows = [
-      ["Билеты", `${(calc.revenue.ticketPrice * calc.revenue.passengers).toLocaleString("ru-RU")} тг`],
-      ["Бельё", `${(calc.revenue.linenPrice * calc.revenue.linenPassengers).toLocaleString("ru-RU")} тг`],
+    const revenueRows: string[][] = [
+      ["Tickets", `${(calc.revenue.ticketPrice * calc.revenue.passengers).toLocaleString("ru-RU")} tg`],
+      ["Linen", `${(calc.revenue.linenPrice * calc.revenue.linenPassengers).toLocaleString("ru-RU")} tg`],
     ];
     if (calc.revenue.subsidy > 0) {
-      revenueRows.push(["Субсидии", `${calc.revenue.subsidy.toLocaleString("ru-RU")} тг`]);
+      revenueRows.push(["Subsidies", `${calc.revenue.subsidy.toLocaleString("ru-RU")} tg`]);
     }
-    revenueRows.push(["ИТОГО ДОХОДЫ", `${calc.financial.totalRevenue.toLocaleString("ru-RU")} тг`]);
+    revenueRows.push(["TOTAL REVENUE", `${calc.financial.totalRevenue.toLocaleString("ru-RU")} tg`]);
 
     autoTable(doc, {
       startY: y,
-      head: [["Статья", "Сумма"]],
+      head: [["Item", "Amount"]],
       body: revenueRows,
       theme: "grid",
       headStyles: { fillColor: [34, 139, 34], fontSize: 9 },
       bodyStyles: { fontSize: 9 },
       margin: { left: 14 },
     });
-    y = (doc as unknown as Record<string, number>).lastAutoTable?.finalY + 10 || y + 40;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    y = ((doc as any).lastAutoTable?.finalY ?? y + 40) + 10;
   }
 
-  // Expenses
   doc.setFontSize(11);
   doc.setTextColor(30, 60, 120);
-  doc.text("Расходы", 14, y);
+  doc.text("Expenses", 14, y);
   y += 6;
 
   const expenseRows = Object.entries(calc.results.byGroup).map(([group, amount]) => [
-    group, `${amount.toLocaleString("ru-RU")} тг`,
+    group, `${amount.toLocaleString("ru-RU")} tg`,
   ]);
-  expenseRows.push(["ИТОГО РАСХОДЫ", `${calc.results.total.toLocaleString("ru-RU")} тг`]);
+  expenseRows.push(["TOTAL EXPENSES", `${calc.results.total.toLocaleString("ru-RU")} tg`]);
 
   autoTable(doc, {
     startY: y,
-    head: [["Категория", "Сумма"]],
+    head: [["Category", "Amount"]],
     body: expenseRows,
     theme: "grid",
     headStyles: { fillColor: [178, 34, 34], fontSize: 9 },
     bodyStyles: { fontSize: 9 },
     margin: { left: 14 },
   });
-  y = (doc as unknown as Record<string, number>).lastAutoTable?.finalY + 10 || y + 40;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  y = ((doc as any).lastAutoTable?.finalY ?? y + 40) + 10;
 
-  // Cost per unit (cost report)
   if (type === "cost") {
     autoTable(doc, {
       startY: y,
-      head: [["Показатель", "Значение"]],
+      head: [["Metric", "Value"]],
       body: [
-        ["Себестоимость на вагон", `${Math.round(calc.results.costPerWagon).toLocaleString("ru-RU")} тг`],
-        ["Себестоимость на пассажира", `${Math.round(calc.results.costPerPassenger).toLocaleString("ru-RU")} тг`],
+        ["Cost per wagon", `${Math.round(calc.results.costPerWagon).toLocaleString("ru-RU")} tg`],
+        ["Cost per passenger", `${Math.round(calc.results.costPerPassenger).toLocaleString("ru-RU")} tg`],
       ],
       theme: "grid",
       headStyles: { fillColor: [30, 60, 120], fontSize: 9 },
       bodyStyles: { fontSize: 9 },
       margin: { left: 14 },
     });
-    y = (doc as unknown as Record<string, number>).lastAutoTable?.finalY + 10 || y + 30;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    y = ((doc as any).lastAutoTable?.finalY ?? y + 30) + 10;
   }
 
-  // Financial result
   const isProfit = calc.financial.financialResult >= 0;
   doc.setFontSize(12);
   doc.setTextColor(isProfit ? 34 : 178, isProfit ? 139 : 34, isProfit ? 34 : 34);
-  doc.text(`Финансовый результат: ${calc.financial.financialResult.toLocaleString("ru-RU")} тг`, 14, y);
+  doc.text(`Financial Result: ${calc.financial.financialResult.toLocaleString("ru-RU")} tg`, 14, y);
   y += 6;
   doc.setFontSize(9);
   doc.setTextColor(100, 100, 100);
-  doc.text(`Маржа: ${calc.financial.profitMargin.toFixed(1)}%`, 14, y);
+  doc.text(`Margin: ${calc.financial.profitMargin.toFixed(1)}%`, 14, y);
 
-  // Footer
   const pageHeight = doc.internal.pageSize.height;
   doc.setFontSize(8);
   doc.setTextColor(150, 150, 150);
-  doc.text("EcoPlan Hub — Система планирования расходов пассажирских поездов", 14, pageHeight - 10);
+  doc.text("EcoPlan Hub", 14, pageHeight - 10);
 
-  doc.save(`EcoPlan_${calc.trainNumber}_${type}_${new Date(calc.date).toLocaleDateString("ru-RU").replace(/\./g, "-")}.pdf`);
+  doc.save(`EcoPlan_${calc.trainNumber}_${type}.pdf`);
 }
