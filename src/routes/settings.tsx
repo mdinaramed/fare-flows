@@ -3,8 +3,12 @@ import { useState, useEffect } from "react";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { TariffSettingsBlock } from "@/components/TariffSettingsBlock";
-import { DEFAULT_TARIFFS, type TariffSettings } from "@/lib/train-data";
+import { Button } from "@/components/ui/button";
+import { Save, CheckCircle } from "lucide-react";
 import { canEditSettings } from "@/lib/roles";
+import { loadTariffs, saveTariffs } from "@/lib/storage";
+import { toast } from "sonner";
+import type { TariffSettings } from "@/lib/train-data";
 
 export const Route = createFileRoute("/settings")({
   head: () => ({
@@ -53,15 +57,32 @@ function SettingsGuard() {
 }
 
 function SettingsPage() {
-  const [tariffs, setTariffs] = useState<TariffSettings>(DEFAULT_TARIFFS);
+  const [tariffs, setTariffs] = useState<TariffSettings>(loadTariffs());
+  const [saved, setSaved] = useState(true);
 
   const handleTariffChange = (key: keyof TariffSettings, value: number) => {
     setTariffs((prev) => ({ ...prev, [key]: value }));
+    setSaved(false);
+  };
+
+  const handleSave = () => {
+    saveTariffs(tariffs);
+    setSaved(true);
+    toast.success("Тарифы сохранены");
   };
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-6">
+    <div className="max-w-2xl mx-auto px-4 py-6 space-y-4">
       <TariffSettingsBlock tariffs={tariffs} onTariffChange={handleTariffChange} />
+      <Button
+        onClick={handleSave}
+        disabled={saved}
+        className="w-full h-12 text-base gap-2"
+        variant={saved ? "secondary" : "default"}
+      >
+        {saved ? <CheckCircle className="h-5 w-5" /> : <Save className="h-5 w-5" />}
+        {saved ? "Тарифы сохранены" : "Сохранить тарифы"}
+      </Button>
     </div>
   );
 }
