@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { LogIn, Shield } from "lucide-react";
+import { LogIn } from "lucide-react";
 import type { UserRole } from "@/lib/train-data";
 import { ROLE_LABELS, ROLE_DESCRIPTIONS } from "@/lib/train-data";
 import { useState } from "react";
@@ -71,11 +71,6 @@ function LoginPage() {
             <LogIn className="h-5 w-5" />
             Войти как {ROLE_LABELS[selectedRole].toLowerCase()}
           </Button>
-
-          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-            <Shield className="h-3 w-3" />
-            Демо-режим · вход без пароля
-          </div>
         </CardContent>
       </Card>
     </div>

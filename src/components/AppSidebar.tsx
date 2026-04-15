@@ -1,5 +1,5 @@
 import { Link, useLocation } from "@tanstack/react-router";
-import { Calculator, FileText, Settings, LogOut, Shield } from "lucide-react";
+import { Calculator, FileText, Settings, LogOut, Shield, BarChart3 } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -25,6 +25,7 @@ export function AppSidebar() {
   const items = [
     { title: "Расчёт", url: "/", icon: Calculator, visible: true },
     { title: "Отчёты", url: "/reports", icon: FileText, visible: canViewReports() },
+    { title: "Аналитика", url: "/analytics", icon: BarChart3, visible: role === "analyst" || role === "manager" },
     { title: "Настройки", url: "/settings", icon: Settings, visible: canEditSettings() },
   ].filter((i) => i.visible);
 
@@ -38,7 +39,7 @@ export function AppSidebar() {
           {!collapsed && (
             <div className="overflow-hidden">
               <p className="text-sm font-bold text-foreground truncate">EcoPlan Hub</p>
-              <p className="text-[10px] text-muted-foreground truncate">Система планирования расходов</p>
+              <p className="text-[10px] text-muted-foreground truncate">Планирование расходов</p>
             </div>
           )}
         </div>

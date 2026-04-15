@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Search, Train, Clock, MapPin, Moon } from "lucide-react";
-import { findTrain, type TrainInfo } from "@/lib/train-data";
+import { findTrain, TRAINS, type TrainInfo } from "@/lib/train-data";
 
 interface TrainSearchProps {
   onTrainFound: (train: TrainInfo) => void;
@@ -24,7 +24,7 @@ export function TrainSearch({ onTrainFound }: TrainSearchProps) {
       onTrainFound(found);
     } else {
       setTrain(null);
-      if (value.trim().length >= 3) setNotFound(true);
+      if (value.trim().length >= 2) setNotFound(true);
     }
   }
 
@@ -40,15 +40,31 @@ export function TrainSearch({ onTrainFound }: TrainSearchProps) {
         <div className="relative">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
-            placeholder="Номер поезда или направление (T009, Алматы...)"
+            placeholder="Номер поезда или направление (066, 323, 086, Кызылорда...)"
             value={query}
             onChange={(e) => handleSearch(e.target.value)}
             className="pl-10 h-12 text-base"
           />
         </div>
 
+        {!train && !notFound && (
+          <div className="flex flex-wrap gap-2">
+            {TRAINS.map((t) => (
+              <button
+                key={t.number}
+                onClick={() => { setQuery(t.number); handleSearch(t.number); }}
+                className="text-xs rounded-lg border px-3 py-1.5 hover:bg-accent transition-colors"
+              >
+                №{t.number} · {t.to}
+              </button>
+            ))}
+          </div>
+        )}
+
         {notFound && (
-          <p className="text-sm text-destructive">Поезд не найден. Попробуйте: T009, T001, T005 или название города</p>
+          <p className="text-sm text-destructive">
+            Поезд не найден. Доступны: {TRAINS.map((t) => `№${t.number}`).join(", ")}
+          </p>
         )}
 
         {train && (
@@ -69,24 +85,25 @@ export function TrainSearch({ onTrainFound }: TrainSearchProps) {
                     {train.nightHours}ч ночных
                   </Badge>
                 )}
+                <Badge variant="outline">{train.distanceKm} км</Badge>
               </div>
             </div>
 
-            <div className="rounded-lg bg-muted/50 p-4">
+            <div className="rounded-lg bg-muted/50 p-4 max-h-64 overflow-y-auto">
               <p className="text-xs font-medium text-muted-foreground mb-3 uppercase tracking-wide">Маршрут следования</p>
-              <div className="space-y-2">
+              <div className="space-y-1">
                 {train.stations.map((s, i) => (
                   <div key={i} className="flex items-center gap-3 text-sm">
                     <div className="flex flex-col items-center">
-                      <div className={`h-2.5 w-2.5 rounded-full ${i === 0 || i === train.stations.length - 1 ? "bg-primary" : "bg-muted-foreground/40"}`} />
-                      {i < train.stations.length - 1 && <div className="w-px h-4 bg-border" />}
+                      <div className={`h-2 w-2 rounded-full ${i === 0 || i === train.stations.length - 1 ? "bg-primary" : "bg-muted-foreground/40"}`} />
+                      {i < train.stations.length - 1 && <div className="w-px h-3 bg-border" />}
                     </div>
-                    <div className="flex-1 flex items-center justify-between">
-                      <div className="flex items-center gap-1.5">
-                        <MapPin className="h-3 w-3 text-muted-foreground" />
-                        <span className="font-medium">{s.name}</span>
+                    <div className="flex-1 flex items-center justify-between min-w-0">
+                      <div className="flex items-center gap-1.5 min-w-0">
+                        <MapPin className="h-3 w-3 text-muted-foreground shrink-0" />
+                        <span className="font-medium truncate">{s.name}</span>
                       </div>
-                      <div className="flex gap-3 text-xs text-muted-foreground">
+                      <div className="flex gap-3 text-xs text-muted-foreground shrink-0">
                         {s.arrival !== "—" && <span>Приб: {s.arrival}</span>}
                         {s.departure !== "—" && <span>Отпр: {s.departure}</span>}
                         {s.stop !== "—" && <span className="text-primary">⏱ {s.stop}</span>}

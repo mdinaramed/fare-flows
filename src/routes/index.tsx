@@ -8,10 +8,12 @@ import { RevenueBlock } from "@/components/RevenueBlock";
 import { ExpenseTracker } from "@/components/ExpenseTracker";
 import { ResultsBlock } from "@/components/ResultsBlock";
 import { FinancialResultBlock } from "@/components/FinancialResultBlock";
-import { Calculator, Save, Download } from "lucide-react";
+import { Calculator, Save, CheckCircle } from "lucide-react";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { canEdit, canCalculate } from "@/lib/roles";
+import { loadTariffs } from "@/lib/storage";
+import { toast } from "sonner";
 import {
   type TrainInfo,
   type RouteType,
@@ -24,13 +26,13 @@ import {
   type RevenueData,
   type ProductionMetrics,
   type FinancialSummary,
-  DEFAULT_TARIFFS,
   DEFAULT_WAGON_TYPES,
   createDefaultExpenses,
   calculateExpenses,
   calcProductionMetrics,
   calcRevenue,
   calcFinancialResult,
+  saveCalculation,
 } from "@/lib/train-data";
 
 export const Route = createFileRoute("/")({
@@ -87,15 +89,14 @@ function IndexPage() {
   const [routeType, setRouteType] = useState<RouteType>("social");
   const [trainType, setTrainType] = useState<TrainType>("standard");
   const [rollingStockMode, setRollingStockMode] = useState<"rent" | "depreciation">("rent");
-  const [tariffs, setTariffs] = useState<TariffSettings>(DEFAULT_TARIFFS);
+  const [tariffs] = useState<TariffSettings>(loadTariffs());
   const [expenses, setExpenses] = useState<ExpenseItem[]>([]);
   const [results, setResults] = useState<CalculationResult | null>(null);
+  const [saved, setSaved] = useState(false);
 
-  // Production
   const [wagonTypes, setWagonTypes] = useState<WagonTypeRow[]>(DEFAULT_WAGON_TYPES);
   const [occupancy, setOccupancy] = useState(70);
 
-  // Revenue
   const [revenue, setRevenue] = useState<RevenueData>({
     ticketPrice: 8500,
     passengers: 360,
@@ -104,7 +105,6 @@ function IndexPage() {
     subsidy: 0,
   });
 
-  // Financial
   const [financial, setFinancial] = useState<FinancialSummary | null>(null);
 
   const prodMetrics: ProductionMetrics = train
@@ -126,6 +126,7 @@ function IndexPage() {
       setTrain(t);
       setResults(null);
       setFinancial(null);
+      setSaved(false);
       setExpenses(createDefaultExpenses({ wagons: totalWagons, passengers: totalPassengers, routeType, trainType, rollingStockMode, train: t, tariffs }));
     },
     [totalWagons, totalPassengers, routeType, trainType, rollingStockMode, tariffs]
@@ -136,12 +137,14 @@ function IndexPage() {
     setExpenses(createDefaultExpenses(getParams(train)));
     setResults(null);
     setFinancial(null);
+    setSaved(false);
   }, [train, getParams]);
 
   const handleExpenseChange = useCallback((id: string, field: keyof ExpenseItem, value: unknown) => {
     setExpenses((prev) => prev.map((e) => (e.id === id ? { ...e, [field]: value } : e)));
     setResults(null);
     setFinancial(null);
+    setSaved(false);
   }, []);
 
   const handleWagonChange = useCallback((id: string, field: keyof WagonTypeRow, value: number) => {
@@ -151,6 +154,7 @@ function IndexPage() {
   const handleRevenueChange = useCallback((field: keyof RevenueData, value: number) => {
     setRevenue((prev) => ({ ...prev, [field]: value }));
     setFinancial(null);
+    setSaved(false);
   }, []);
 
   const handleCalculate = useCallback(() => {
@@ -159,7 +163,31 @@ function IndexPage() {
     setResults(res);
     const { totalRevenue } = calcRevenue(revenue);
     setFinancial(calcFinancialResult(totalRevenue, res.total));
+    setSaved(false);
   }, [expenses, train, getParams, revenue]);
+
+  const handleSave = useCallback(() => {
+    if (!train || !results || !financial) return;
+    saveCalculation({
+      id: crypto.randomUUID(),
+      date: new Date().toISOString(),
+      trainNumber: train.number,
+      trainRoute: train.route,
+      trainInfo: train,
+      wagonTypes,
+      occupancy,
+      routeType,
+      trainType,
+      rollingStockMode,
+      revenue,
+      expenses,
+      results,
+      financial,
+      productionMetrics: prodMetrics,
+    });
+    setSaved(true);
+    toast.success("Расчёт сохранён", { description: `Поезд №${train.number} · ${train.route}` });
+  }, [train, results, financial, wagonTypes, occupancy, routeType, trainType, rollingStockMode, revenue, expenses, prodMetrics]);
 
   useEffect(() => {
     if (train) refreshExpenses();
@@ -202,16 +230,15 @@ function IndexPage() {
               <ResultsBlock results={results} wagons={totalWagons} passengers={totalPassengers} />
               {financial && <FinancialResultBlock summary={financial} />}
 
-              <div className="flex gap-2">
-                <Button variant="outline" className="flex-1 gap-2" onClick={() => alert("Расчёт сохранён (демо)")}>
-                  <Save className="h-4 w-4" />
-                  Сохранить расчёт
-                </Button>
-                <Button variant="outline" className="flex-1 gap-2" onClick={() => alert("Скачивание отчёта (демо)")}>
-                  <Download className="h-4 w-4" />
-                  Скачать отчёт
-                </Button>
-              </div>
+              <Button
+                variant={saved ? "secondary" : "default"}
+                className="w-full h-12 text-base gap-2"
+                onClick={handleSave}
+                disabled={saved}
+              >
+                {saved ? <CheckCircle className="h-5 w-5" /> : <Save className="h-5 w-5" />}
+                {saved ? "Расчёт сохранён" : "Сохранить расчёт"}
+              </Button>
             </div>
           )}
         </>
@@ -219,8 +246,8 @@ function IndexPage() {
 
       {!train && (
         <div className="text-center py-12 text-muted-foreground">
-          <p className="text-sm">Введите номер поезда или направление для начала работы</p>
-          <p className="text-xs mt-1">Доступны: T009, T001, T005</p>
+          <p className="text-sm">Введите номер поезда или выберите из списка</p>
+          <p className="text-xs mt-1">Доступны поезда: 066, 323, 086</p>
         </div>
       )}
     </div>
