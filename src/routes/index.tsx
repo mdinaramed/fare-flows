@@ -68,9 +68,9 @@ function IndexGuard() {
       <div className="min-h-screen flex w-full">
         <AppSidebar />
         <div className="flex-1 flex flex-col min-w-0">
-          <header className="h-12 flex items-center border-b bg-card/80 backdrop-blur-sm sticky top-0 z-10 px-2">
+          <header className="h-11 flex items-center border-b bg-card/90 backdrop-blur-sm sticky top-0 z-10 px-3">
             <SidebarTrigger className="mr-2" />
-            <h1 className="text-sm font-semibold text-foreground">Расчёт расходов</h1>
+            <h1 className="text-sm font-semibold">Расчёт расходов</h1>
           </header>
           <main className="flex-1 overflow-auto">
             <IndexPage />
@@ -100,8 +100,6 @@ function IndexPage() {
   const [revenue, setRevenue] = useState<RevenueData>({
     ticketPrice: 8500,
     passengers: 360,
-    linenPrice: 1200,
-    linenPassengers: 280,
     subsidy: 0,
   });
 
@@ -186,7 +184,7 @@ function IndexPage() {
       productionMetrics: prodMetrics,
     });
     setSaved(true);
-    toast.success("Расчёт сохранён", { description: `Поезд №${train.number} · ${train.route}` });
+    toast.success("Расчёт сохранён", { description: `Поезд ${train.number} · ${train.route}` });
   }, [train, results, financial, wagonTypes, occupancy, routeType, trainType, rollingStockMode, revenue, expenses, prodMetrics]);
 
   useEffect(() => {
@@ -194,58 +192,70 @@ function IndexPage() {
   }, [totalWagons, totalPassengers, routeType, trainType, rollingStockMode, tariffs]);
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-6 space-y-4">
-      <TrainSearch onTrainFound={handleTrainFound} />
+    <div className="p-4">
+      {/* Search always on top, full width */}
+      <div className="mb-4">
+        <TrainSearch onTrainFound={handleTrainFound} />
+      </div>
 
       {train && (
         <>
-          <TrainParams
-            wagons={totalWagons} passengers={totalPassengers}
-            routeType={routeType} trainType={trainType} rollingStockMode={rollingStockMode}
-            onWagonsChange={() => {}} onPassengersChange={() => {}}
-            onRouteTypeChange={setRouteType} onTrainTypeChange={setTrainType}
-            onRollingStockModeChange={setRollingStockMode}
-            disabled={!editAllowed}
-          />
+          {/* Dashboard grid */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 mb-4">
+            <TrainParams
+              wagons={totalWagons} passengers={totalPassengers}
+              routeType={routeType} trainType={trainType} rollingStockMode={rollingStockMode}
+              onWagonsChange={() => {}} onPassengersChange={() => {}}
+              onRouteTypeChange={setRouteType} onTrainTypeChange={setTrainType}
+              onRollingStockModeChange={setRollingStockMode}
+              disabled={!editAllowed}
+            />
+            <ProductionBlock
+              wagonTypes={wagonTypes} onWagonChange={handleWagonChange}
+              metrics={prodMetrics} occupancy={occupancy} onOccupancyChange={setOccupancy}
+              disabled={!editAllowed}
+            />
+            <RevenueBlock revenue={revenue} onRevenueChange={handleRevenueChange} disabled={!editAllowed} />
+          </div>
 
-          <ProductionBlock
-            wagonTypes={wagonTypes} onWagonChange={handleWagonChange}
-            metrics={prodMetrics} occupancy={occupancy} onOccupancyChange={setOccupancy}
-            disabled={!editAllowed}
-          />
+          {/* Expenses full width */}
+          <div className="mb-4">
+            <ExpenseTracker expenses={expenses} onExpenseChange={handleExpenseChange} disabled={!editAllowed} />
+          </div>
 
-          <RevenueBlock revenue={revenue} onRevenueChange={handleRevenueChange} disabled={!editAllowed} />
-
-          <ExpenseTracker expenses={expenses} onExpenseChange={handleExpenseChange} disabled={!editAllowed} />
-
+          {/* Calculate button */}
           {calcAllowed && (
-            <Button onClick={handleCalculate} className="w-full h-14 text-lg font-semibold gap-2" size="lg">
-              <Calculator className="h-5 w-5" />
+            <Button onClick={handleCalculate} className="w-full h-11 font-semibold gap-2 mb-4" size="lg">
+              <Calculator className="h-4 w-4" />
               Рассчитать
             </Button>
           )}
 
+          {/* Results grid */}
           {results && (
-            <div className="animate-in fade-in-50 slide-in-from-bottom-4 duration-500 space-y-4">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
               <ResultsBlock results={results} wagons={totalWagons} passengers={totalPassengers} />
               {financial && <FinancialResultBlock summary={financial} />}
-
-              <Button
-                variant={saved ? "secondary" : "default"}
-                className="w-full h-12 text-base gap-2"
-                onClick={handleSave}
-                disabled={saved}
-              >
-                {saved ? <CheckCircle className="h-5 w-5" /> : <Save className="h-5 w-5" />}
-                {saved ? "Расчёт сохранён" : "Сохранить расчёт"}
-              </Button>
             </div>
+          )}
+
+          {/* Save */}
+          {results && (
+            <Button
+              variant={saved ? "secondary" : "default"}
+              className="w-full h-10 gap-2"
+              onClick={handleSave}
+              disabled={saved}
+            >
+              {saved ? <CheckCircle className="h-4 w-4" /> : <Save className="h-4 w-4" />}
+              {saved ? "Расчёт сохранён" : "Сохранить расчёт"}
+            </Button>
           )}
         </>
       )}
 
       {!train && (
-        <div className="text-center py-12 text-muted-foreground">
+        <div className="text-center py-16 text-muted-foreground">
           <p className="text-sm">Введите номер поезда или выберите из списка</p>
           <p className="text-xs mt-1">Доступны поезда: 066, 323, 086</p>
         </div>

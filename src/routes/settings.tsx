@@ -43,9 +43,9 @@ function SettingsGuard() {
       <div className="min-h-screen flex w-full">
         <AppSidebar />
         <div className="flex-1 flex flex-col min-w-0">
-          <header className="h-12 flex items-center border-b bg-card/80 backdrop-blur-sm sticky top-0 z-10 px-2">
+          <header className="h-11 flex items-center border-b bg-card/90 backdrop-blur-sm sticky top-0 z-10 px-3">
             <SidebarTrigger className="mr-2" />
-            <h1 className="text-sm font-semibold text-foreground">Настройки тарифов</h1>
+            <h1 className="text-sm font-semibold">Настройки тарифов</h1>
           </header>
           <main className="flex-1 overflow-auto">
             <SettingsPage />
@@ -72,15 +72,15 @@ function SettingsPage() {
   };
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-6 space-y-4">
+    <div className="max-w-3xl mx-auto p-4 space-y-4">
       <TariffSettingsBlock tariffs={tariffs} onTariffChange={handleTariffChange} />
       <Button
         onClick={handleSave}
         disabled={saved}
-        className="w-full h-12 text-base gap-2"
+        className="w-full h-10 gap-2"
         variant={saved ? "secondary" : "default"}
       >
-        {saved ? <CheckCircle className="h-5 w-5" /> : <Save className="h-5 w-5" />}
+        {saved ? <CheckCircle className="h-4 w-4" /> : <Save className="h-4 w-4" />}
         {saved ? "Тарифы сохранены" : "Сохранить тарифы"}
       </Button>
     </div>

@@ -38,7 +38,6 @@ function calcDuration(stations: TrainInfo["stations"]): { duration: string; dura
   const [aH, aM] = arr.split(":").map(Number);
   let totalMin = (aH * 60 + aM) - (dH * 60 + dM);
   if (totalMin < 0) totalMin += 24 * 60;
-  // For multi-day trips, check if it's more than 12 hours
   const hours = Math.floor(totalMin / 60);
   const mins = totalMin % 60;
   return { duration: `${hours}ч ${mins.toString().padStart(2, "0")}мин`, durationHours: hours + mins / 60 };
@@ -46,7 +45,7 @@ function calcDuration(stations: TrainInfo["stations"]): { duration: string; dura
 
 export const TRAINS: TrainInfo[] = [
   {
-    number: "066", route: "Нурлы жол → Кызылорда", from: "Нурлы жол", to: "Кызылорда",
+    number: "066", route: "Нурлы жол — Кызылорда", from: "Нурлы жол", to: "Кызылорда",
     duration: "", durationHours: 0, nightHours: 0, distanceKm: 1800,
     stations: [
       { name: "Нурлы жол", arrival: "—", departure: "21:42", stop: "—" },
@@ -67,7 +66,7 @@ export const TRAINS: TrainInfo[] = [
     ],
   },
   {
-    number: "323", route: "Нурлы жол → Петропавловск", from: "Нурлы жол", to: "Петропавловск",
+    number: "323", route: "Нурлы жол — Петропавловск", from: "Нурлы жол", to: "Петропавловск",
     duration: "", durationHours: 0, nightHours: 0, distanceKm: 540,
     stations: [
       { name: "Нурлы жол", arrival: "—", departure: "22:35", stop: "—" },
@@ -110,7 +109,7 @@ export const TRAINS: TrainInfo[] = [
     ],
   },
   {
-    number: "086", route: "Нурлы жол → Шымкент", from: "Нурлы жол", to: "Шымкент",
+    number: "086", route: "Нурлы жол — Шымкент", from: "Нурлы жол", to: "Шымкент",
     duration: "", durationHours: 0, nightHours: 0, distanceKm: 1400,
     stations: [
       { name: "Нурлы жол", arrival: "—", departure: "20:00", stop: "—" },
@@ -124,14 +123,11 @@ export const TRAINS: TrainInfo[] = [
   },
 ];
 
-// Calculate durations and night hours
 TRAINS.forEach((t) => {
   const { duration, durationHours } = calcDuration(t.stations);
   t.duration = duration;
   t.durationHours = Math.round(durationHours * 10) / 10;
-  // For 066: 21:42 → 00:14 next day = ~26.5h
   if (t.number === "066") { t.durationHours = 26.5; t.duration = "26ч 32мин"; }
-  // For 086: 20:00 → 14:40 next day = ~18.7h
   if (t.number === "086") { t.durationHours = 18.7; t.duration = "18ч 40мин"; }
   t.nightHours = calcNightHours(t.stations);
 });
@@ -190,20 +186,18 @@ export function calcProductionMetrics(
 }
 
 // ===== REVENUE =====
+// Revenue = tickets + subsidies ONLY (linen moved to expenses)
 
 export interface RevenueData {
   ticketPrice: number;
   passengers: number;
-  linenPrice: number;
-  linenPassengers: number;
   subsidy: number;
 }
 
 export function calcRevenue(rev: RevenueData) {
   const ticketRevenue = rev.ticketPrice * rev.passengers;
-  const linenRevenue = rev.linenPrice * rev.linenPassengers;
-  const totalRevenue = ticketRevenue + linenRevenue + rev.subsidy;
-  return { ticketRevenue, linenRevenue, totalRevenue };
+  const totalRevenue = ticketRevenue + rev.subsidy;
+  return { ticketRevenue, totalRevenue };
 }
 
 // ===== TARIFFS =====
@@ -223,8 +217,6 @@ export interface TariffSettings {
   supplies: number;
   inventory: number;
   drinkWater: number;
-  uniformSummer: number;
-  uniformWinter: number;
   staffPerWagon: number;
   nightCoefficient: number;
 }
@@ -244,8 +236,6 @@ export const DEFAULT_TARIFFS: TariffSettings = {
   supplies: 2000,
   inventory: 5000,
   drinkWater: 500,
-  uniformSummer: 35000,
-  uniformWinter: 45000,
   staffPerWagon: 2,
   nightCoefficient: 1.5,
 };
@@ -275,7 +265,6 @@ export interface CalculationParams {
 
 export function createDefaultExpenses(params: CalculationParams): ExpenseItem[] {
   const { wagons, trainType, passengers, rollingStockMode, train, tariffs } = params;
-  const staff = tariffs.staffPerWagon * wagons;
   const trainMultiplier = trainType === "talgo" ? 1.3 : 1.0;
 
   return [
@@ -290,8 +279,6 @@ export function createDefaultExpenses(params: CalculationParams): ExpenseItem[] 
     ...(rollingStockMode === "rent"
       ? [{ id: "rent", label: "Аренда вагонов", enabled: true, tariff: tariffs.rent, quantity: wagons, group: "Подвижной состав", unit: "вагон", auto: true }]
       : [{ id: "depreciation", label: "Амортизация", enabled: true, tariff: tariffs.depreciation, quantity: wagons, group: "Подвижной состав", unit: "вагон", auto: true }]),
-    { id: "uniform_summer", label: "Форма (летняя)", enabled: true, tariff: Math.round(tariffs.uniformSummer / 24), quantity: staff, group: "Форма персонала", unit: "чел./мес", auto: true },
-    { id: "uniform_winter", label: "Форма (зимняя)", enabled: true, tariff: Math.round(tariffs.uniformWinter / 24), quantity: staff, group: "Форма персонала", unit: "чел./мес", auto: true },
     { id: "linen", label: "Бельё", enabled: true, tariff: tariffs.linen, quantity: passengers, group: "Расходники", unit: "пасс.", auto: true },
     { id: "drinkwater", label: "Вода (питьевая)", enabled: true, tariff: tariffs.drinkWater, quantity: passengers, group: "Расходники", unit: "пасс.", auto: true },
     { id: "supplies", label: "Расходные материалы", enabled: true, tariff: tariffs.supplies, quantity: wagons, group: "Расходники", unit: "вагон", auto: true },
@@ -352,7 +339,7 @@ export function calculateExpenses(
   const costPerPassenger = params.passengers > 0 ? total / params.passengers : 0;
 
   if (costPerWagon > norms.maxCostPerWagon) {
-    anomalies.push({ type: "warning", message: `Расходы на вагон (${Math.round(costPerWagon).toLocaleString("ru-RU")} ₸) превышают норматив (${norms.maxCostPerWagon.toLocaleString("ru-RU")} ₸)` });
+    anomalies.push({ type: "warning", message: `Расходы на вагон (${Math.round(costPerWagon).toLocaleString("ru-RU")} тг) превышают норматив (${norms.maxCostPerWagon.toLocaleString("ru-RU")} тг)` });
   }
 
   const stationShare = (results["Станционные"] || 0) / total;
