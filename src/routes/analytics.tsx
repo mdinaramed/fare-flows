@@ -3,8 +3,6 @@ import { useState, useEffect, useMemo } from "react";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { BarChart3, PieChart as PieChartIcon } from "lucide-react";
 import { loadCalculations, type SavedCalculation } from "@/lib/train-data";
 import type { PieLabelRenderProps } from "recharts";
 import {
@@ -52,9 +50,9 @@ function AnalyticsGuard() {
       <div className="min-h-screen flex w-full">
         <AppSidebar />
         <div className="flex-1 flex flex-col min-w-0">
-          <header className="h-12 flex items-center border-b bg-card/80 backdrop-blur-sm sticky top-0 z-10 px-2">
+          <header className="h-11 flex items-center border-b bg-card/90 backdrop-blur-sm sticky top-0 z-10 px-3">
             <SidebarTrigger className="mr-2" />
-            <h1 className="text-sm font-semibold text-foreground">Аналитика</h1>
+            <h1 className="text-sm font-semibold">Аналитика</h1>
           </header>
           <main className="flex-1 overflow-auto">
             <AnalyticsPage />
@@ -65,7 +63,7 @@ function AnalyticsGuard() {
   );
 }
 
-const COLORS = ["#1e3c78", "#228b22", "#b22222", "#6a5acd", "#d2691e", "#008b8b"];
+const COLORS = ["#1a3264", "#286428", "#8c1e1e", "#5a4aad", "#9a6019", "#1a6464"];
 
 function AnalyticsPage() {
   const [calculations, setCalculations] = useState<SavedCalculation[]>([]);
@@ -84,7 +82,6 @@ function AnalyticsPage() {
     return [...new Set(calculations.map((c) => c.trainNumber))];
   }, [calculations]);
 
-  // Aggregate expense breakdown
   const expenseBreakdown = useMemo(() => {
     if (filtered.length === 0) return [];
     const totals: Record<string, number> = {};
@@ -96,7 +93,6 @@ function AnalyticsPage() {
     return Object.entries(totals).map(([name, value]) => ({ name, value }));
   }, [filtered]);
 
-  // Train comparison
   const trainComparison = useMemo(() => {
     if (calculations.length === 0) return [];
     const byTrain: Record<string, { revenue: number; expenses: number; count: number }> = {};
@@ -107,7 +103,7 @@ function AnalyticsPage() {
       byTrain[calc.trainNumber].count++;
     }
     return Object.entries(byTrain).map(([train, data]) => ({
-      train: `№${train}`,
+      train,
       revenue: Math.round(data.revenue / data.count),
       expenses: Math.round(data.expenses / data.count),
     }));
@@ -115,11 +111,10 @@ function AnalyticsPage() {
 
   if (calculations.length === 0) {
     return (
-      <div className="max-w-2xl mx-auto px-4 py-6">
+      <div className="p-4 max-w-4xl mx-auto">
         <Card>
           <CardContent className="p-8 text-center">
-            <BarChart3 className="h-10 w-10 text-muted-foreground/40 mx-auto mb-3" />
-            <p className="text-sm font-medium text-muted-foreground">Нет данных для аналитики</p>
+            <p className="text-sm text-muted-foreground">Нет данных для аналитики</p>
             <p className="text-xs text-muted-foreground mt-1">Сохраните расчёты для отображения графиков</p>
           </CardContent>
         </Card>
@@ -128,105 +123,104 @@ function AnalyticsPage() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-6 space-y-4">
+    <div className="p-4 max-w-5xl mx-auto space-y-4">
       {/* Filter */}
       <div className="flex items-center gap-2 flex-wrap">
-        <span className="text-xs text-muted-foreground font-medium">Фильтр:</span>
+        <span className="text-xs text-muted-foreground font-semibold uppercase tracking-wide">Фильтр:</span>
         <button
           onClick={() => setSelectedTrain("all")}
-          className={`text-xs rounded-lg border px-3 py-1.5 transition-colors ${selectedTrain === "all" ? "border-primary bg-primary/10 text-primary" : "hover:bg-accent"}`}
+          className={`text-xs rounded border px-3 py-1.5 transition-colors ${selectedTrain === "all" ? "border-primary bg-primary/10 text-primary" : "hover:bg-accent"}`}
         >
-          Все поезда
+          Все
         </button>
         {trainNumbers.map((num) => (
           <button
             key={num}
             onClick={() => setSelectedTrain(num)}
-            className={`text-xs rounded-lg border px-3 py-1.5 transition-colors ${selectedTrain === num ? "border-primary bg-primary/10 text-primary" : "hover:bg-accent"}`}
+            className={`text-xs rounded border px-3 py-1.5 transition-colors ${selectedTrain === num ? "border-primary bg-primary/10 text-primary" : "hover:bg-accent"}`}
           >
-            №{num}
+            {num}
           </button>
         ))}
       </div>
 
-      {/* Expense breakdown pie chart */}
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="flex items-center gap-2 text-base">
-            <PieChartIcon className="h-5 w-5 text-primary" />
-            Структура расходов
-            <Badge variant="secondary" className="ml-auto text-xs">{filtered.length} расчёт(ов)</Badge>
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ResponsiveContainer width="100%" height={280}>
-            <PieChart>
-              <Pie
-                data={expenseBreakdown}
-                cx="50%"
-                cy="50%"
-                outerRadius={100}
-                dataKey="value"
-                label={(props: PieLabelRenderProps) => `${props.name ?? ""} (${((Number(props.percent) || 0) * 100).toFixed(0)}%)`}
-                labelLine={false}
-              >
-                {expenseBreakdown.map((_, i) => (
-                  <Cell key={i} fill={COLORS[i % COLORS.length]} />
-                ))}
-              </Pie>
-              <Tooltip formatter={(v) => `${Number(v).toLocaleString("ru-RU")} ₸`} />
-            </PieChart>
-          </ResponsiveContainer>
-        </CardContent>
-      </Card>
-
-      {/* Train comparison bar chart */}
-      {trainComparison.length > 1 && (
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {/* Pie */}
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="flex items-center gap-2 text-base">
-              <BarChart3 className="h-5 w-5 text-primary" />
-              Сравнение поездов (средние)
+            <CardTitle className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              Структура расходов ({filtered.length} расчёт.)
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={250}>
-              <BarChart data={trainComparison}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="train" fontSize={12} />
-                <YAxis fontSize={10} tickFormatter={(v) => `${(v / 1000).toFixed(0)}к`} />
-                <Tooltip formatter={(v) => `${Number(v).toLocaleString("ru-RU")} ₸`} />
-                <Legend />
-                <Bar dataKey="revenue" name="Доходы" fill="#228b22" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="expenses" name="Расходы" fill="#b22222" radius={[4, 4, 0, 0]} />
-              </BarChart>
+            <ResponsiveContainer width="100%" height={260}>
+              <PieChart>
+                <Pie
+                  data={expenseBreakdown}
+                  cx="50%"
+                  cy="50%"
+                  outerRadius={90}
+                  dataKey="value"
+                  label={(props: PieLabelRenderProps) => `${props.name ?? ""} ${((Number(props.percent) || 0) * 100).toFixed(0)}%`}
+                  labelLine={false}
+                >
+                  {expenseBreakdown.map((_, i) => (
+                    <Cell key={i} fill={COLORS[i % COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip formatter={(v) => `${Number(v).toLocaleString("ru-RU")} тг`} />
+              </PieChart>
             </ResponsiveContainer>
           </CardContent>
         </Card>
-      )}
 
-      {/* Summary cards */}
+        {/* Bar */}
+        {trainComparison.length > 1 && (
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                Сравнение поездов (средние)
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={260}>
+                <BarChart data={trainComparison}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="train" fontSize={11} />
+                  <YAxis fontSize={10} tickFormatter={(v) => `${(v / 1000).toFixed(0)}к`} />
+                  <Tooltip formatter={(v) => `${Number(v).toLocaleString("ru-RU")} тг`} />
+                  <Legend />
+                  <Bar dataKey="revenue" name="Доходы" fill="#286428" radius={[3, 3, 0, 0]} />
+                  <Bar dataKey="expenses" name="Расходы" fill="#8c1e1e" radius={[3, 3, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+        )}
+      </div>
+
+      {/* Summary */}
       <div className="grid grid-cols-3 gap-3">
         <Card>
-          <CardContent className="p-4 text-center">
+          <CardContent className="p-3 text-center">
             <p className="text-[10px] text-muted-foreground uppercase">Ср. доход</p>
-            <p className="text-lg font-bold text-success">
-              {Math.round(filtered.reduce((s, c) => s + c.financial.totalRevenue, 0) / filtered.length).toLocaleString("ru-RU")} ₸
+            <p className="text-base font-bold text-success">
+              {Math.round(filtered.reduce((s, c) => s + c.financial.totalRevenue, 0) / filtered.length).toLocaleString("ru-RU")} тг
             </p>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="p-4 text-center">
+          <CardContent className="p-3 text-center">
             <p className="text-[10px] text-muted-foreground uppercase">Ср. расходы</p>
-            <p className="text-lg font-bold text-destructive">
-              {Math.round(filtered.reduce((s, c) => s + c.results.total, 0) / filtered.length).toLocaleString("ru-RU")} ₸
+            <p className="text-base font-bold text-destructive">
+              {Math.round(filtered.reduce((s, c) => s + c.results.total, 0) / filtered.length).toLocaleString("ru-RU")} тг
             </p>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="p-4 text-center">
+          <CardContent className="p-3 text-center">
             <p className="text-[10px] text-muted-foreground uppercase">Ср. маржа</p>
-            <p className="text-lg font-bold">
+            <p className="text-base font-bold">
               {(filtered.reduce((s, c) => s + c.financial.profitMargin, 0) / filtered.length).toFixed(1)}%
             </p>
           </CardContent>

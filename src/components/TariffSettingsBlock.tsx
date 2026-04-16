@@ -1,7 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Wrench } from "lucide-react";
 import type { TariffSettings } from "@/lib/train-data";
 
 interface TariffSettingsProps {
@@ -37,13 +36,6 @@ const TARIFF_GROUPS = [
     ],
   },
   {
-    title: "Форма персонала",
-    items: [
-      { key: "uniformSummer" as const, label: "Форма (летняя)" },
-      { key: "uniformWinter" as const, label: "Форма (зимняя)" },
-    ],
-  },
-  {
     title: "Расходники",
     items: [
       { key: "linen" as const, label: "Бельё" },
@@ -62,12 +54,11 @@ const TARIFF_GROUPS = [
 
 export function TariffSettingsBlock({ tariffs, onTariffChange }: TariffSettingsProps) {
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {TARIFF_GROUPS.map((group) => (
         <Card key={group.title}>
-          <CardHeader className="pb-3">
-            <CardTitle className="flex items-center gap-2 text-base">
-              <Wrench className="h-4 w-4 text-muted-foreground" />
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-semibold uppercase tracking-wide">
               {group.title}
             </CardTitle>
           </CardHeader>
@@ -80,7 +71,7 @@ export function TariffSettingsBlock({ tariffs, onTariffChange }: TariffSettingsP
                     type="number"
                     value={tariffs[key]}
                     onChange={(e) => onTariffChange(key, parseFloat(e.target.value) || 0)}
-                    className="h-9 text-sm mt-1"
+                    className="h-8 text-sm mt-1"
                   />
                 </div>
               ))}

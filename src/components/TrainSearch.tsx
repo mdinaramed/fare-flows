@@ -1,8 +1,7 @@
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { Search, Train, Clock, MapPin, Moon } from "lucide-react";
+import { Search, MapPin } from "lucide-react";
 import { findTrain, TRAINS, type TrainInfo } from "@/lib/train-data";
 
 interface TrainSearchProps {
@@ -29,84 +28,67 @@ export function TrainSearch({ onTrainFound }: TrainSearchProps) {
   }
 
   return (
-    <Card className="border-2 border-primary/20">
+    <Card>
       <CardHeader className="pb-3">
-        <CardTitle className="flex items-center gap-2 text-lg">
-          <Train className="h-5 w-5 text-primary" />
+        <CardTitle className="text-sm font-semibold uppercase tracking-wide">
           Поиск поезда
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-3">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
-            placeholder="Номер поезда или направление (066, 323, 086, Кызылорда...)"
+            placeholder="Номер поезда или направление (066, 323, 086)"
             value={query}
             onChange={(e) => handleSearch(e.target.value)}
-            className="pl-10 h-12 text-base"
+            className="pl-10 h-10"
           />
         </div>
 
         {!train && !notFound && (
-          <div className="flex flex-wrap gap-2">
+          <div className="flex gap-2">
             {TRAINS.map((t) => (
               <button
                 key={t.number}
                 onClick={() => { setQuery(t.number); handleSearch(t.number); }}
-                className="text-xs rounded-lg border px-3 py-1.5 hover:bg-accent transition-colors"
+                className="text-xs rounded border px-3 py-1.5 hover:bg-accent transition-colors"
               >
-                №{t.number} · {t.to}
+                {t.number} — {t.to}
               </button>
             ))}
           </div>
         )}
 
         {notFound && (
-          <p className="text-sm text-destructive">
-            Поезд не найден. Доступны: {TRAINS.map((t) => `№${t.number}`).join(", ")}
+          <p className="text-xs text-destructive">
+            Поезд не найден. Доступны: {TRAINS.map((t) => t.number).join(", ")}
           </p>
         )}
 
         {train && (
-          <div className="space-y-4 animate-in fade-in-50 slide-in-from-top-2 duration-300">
-            <div className="flex items-center justify-between flex-wrap gap-2">
+          <div className="space-y-3">
+            <div className="flex items-baseline justify-between">
               <div>
-                <p className="text-xl font-bold text-foreground">{train.route}</p>
-                <p className="text-sm text-muted-foreground">Поезд №{train.number}</p>
-              </div>
-              <div className="flex gap-2">
-                <Badge variant="secondary" className="gap-1">
-                  <Clock className="h-3 w-3" />
-                  {train.duration}
-                </Badge>
-                {train.nightHours > 0 && (
-                  <Badge variant="outline" className="gap-1">
-                    <Moon className="h-3 w-3" />
-                    {train.nightHours}ч ночных
-                  </Badge>
-                )}
-                <Badge variant="outline">{train.distanceKm} км</Badge>
+                <p className="text-base font-bold">{train.route}</p>
+                <p className="text-xs text-muted-foreground">Поезд {train.number} · {train.duration} · {train.distanceKm} км</p>
               </div>
             </div>
 
-            <div className="rounded-lg bg-muted/50 p-4 max-h-64 overflow-y-auto">
-              <p className="text-xs font-medium text-muted-foreground mb-3 uppercase tracking-wide">Маршрут следования</p>
-              <div className="space-y-1">
+            <div className="rounded border p-3 max-h-48 overflow-y-auto">
+              <p className="text-[10px] font-semibold text-muted-foreground mb-2 uppercase tracking-wide">Маршрут</p>
+              <div className="space-y-0.5">
                 {train.stations.map((s, i) => (
-                  <div key={i} className="flex items-center gap-3 text-sm">
+                  <div key={i} className="flex items-center gap-2 text-xs">
                     <div className="flex flex-col items-center">
-                      <div className={`h-2 w-2 rounded-full ${i === 0 || i === train.stations.length - 1 ? "bg-primary" : "bg-muted-foreground/40"}`} />
+                      <div className={`h-1.5 w-1.5 rounded-full ${i === 0 || i === train.stations.length - 1 ? "bg-primary" : "bg-muted-foreground/30"}`} />
                       {i < train.stations.length - 1 && <div className="w-px h-3 bg-border" />}
                     </div>
                     <div className="flex-1 flex items-center justify-between min-w-0">
-                      <div className="flex items-center gap-1.5 min-w-0">
-                        <MapPin className="h-3 w-3 text-muted-foreground shrink-0" />
-                        <span className="font-medium truncate">{s.name}</span>
-                      </div>
-                      <div className="flex gap-3 text-xs text-muted-foreground shrink-0">
-                        {s.arrival !== "—" && <span>Приб: {s.arrival}</span>}
-                        {s.departure !== "—" && <span>Отпр: {s.departure}</span>}
-                        {s.stop !== "—" && <span className="text-primary">⏱ {s.stop}</span>}
+                      <span className="truncate">{s.name}</span>
+                      <div className="flex gap-2 text-muted-foreground shrink-0">
+                        {s.arrival !== "—" && <span>{s.arrival}</span>}
+                        {s.departure !== "—" && <span>{s.departure}</span>}
+                        {s.stop !== "—" && <span className="text-primary">{s.stop}</span>}
                       </div>
                     </div>
                   </div>

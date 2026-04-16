@@ -5,7 +5,6 @@ import {
   SidebarContent,
   SidebarGroup,
   SidebarGroupContent,
-  SidebarGroupLabel,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
@@ -33,13 +32,13 @@ export function AppSidebar() {
     <Sidebar collapsible="icon">
       <SidebarHeader className="p-4">
         <div className="flex items-center gap-3">
-          <div className="h-9 w-9 rounded-lg bg-primary flex items-center justify-center shrink-0">
-            <span className="text-lg">🚂</span>
+          <div className="h-8 w-8 rounded bg-sidebar-primary flex items-center justify-center shrink-0">
+            <span className="text-xs font-bold text-sidebar-primary-foreground">EP</span>
           </div>
           {!collapsed && (
             <div className="overflow-hidden">
-              <p className="text-sm font-bold text-foreground truncate">EcoPlan Hub</p>
-              <p className="text-[10px] text-muted-foreground truncate">Планирование расходов</p>
+              <p className="text-sm font-bold text-sidebar-foreground truncate">EcoPlan Hub</p>
+              <p className="text-[10px] text-sidebar-foreground/60 truncate">Планирование расходов</p>
             </div>
           )}
         </div>
@@ -47,7 +46,6 @@ export function AppSidebar() {
 
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>Навигация</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {items.map((item) => {
@@ -71,8 +69,8 @@ export function AppSidebar() {
       <SidebarFooter className="p-4">
         {!collapsed && (
           <div className="flex items-center gap-2 mb-3 px-1">
-            <Shield className="h-3.5 w-3.5 text-muted-foreground" />
-            <span className="text-xs text-muted-foreground">{ROLE_LABELS[role]}</span>
+            <Shield className="h-3.5 w-3.5 text-sidebar-foreground/50" />
+            <span className="text-xs text-sidebar-foreground/60">{ROLE_LABELS[role]}</span>
           </div>
         )}
         <SidebarMenu>
