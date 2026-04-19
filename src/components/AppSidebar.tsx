@@ -1,5 +1,5 @@
 import { Link, useLocation } from "@tanstack/react-router";
-import { Calculator, FileText, Settings, LogOut, Shield, BarChart3 } from "lucide-react";
+import { Calculator, FileText, Settings, LogOut, Shield, BarChart3, Briefcase } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -22,7 +22,8 @@ export function AppSidebar() {
   const role = getCurrentRole();
 
   const items = [
-    { title: "Расчёт", url: "/", icon: Calculator, visible: true },
+    { title: "Расчёт", url: "/", icon: Calculator, visible: role === "manager" || role === "analyst" },
+    { title: "Руководство", url: "/director", icon: Briefcase, visible: role === "director" || role === "manager" },
     { title: "Отчёты", url: "/reports", icon: FileText, visible: canViewReports() },
     { title: "Аналитика", url: "/analytics", icon: BarChart3, visible: role === "analyst" || role === "manager" },
     { title: "Настройки", url: "/settings", icon: Settings, visible: canEditSettings() },
