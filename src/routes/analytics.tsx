@@ -205,7 +205,7 @@ function AnalyticsPage() {
           <CardContent className="p-3 text-center">
             <p className="text-[10px] text-muted-foreground uppercase">Ср. доход</p>
             <p className="text-base font-bold text-success">
-              {Math.round(filtered.reduce((s, c) => s + c.financial.totalRevenue, 0) / filtered.length).toLocaleString("ru-RU")} тг
+              {Math.round(filtered.reduce((s, c) => s + c.financial.totalRevenue, 0) / filtered.length).toLocaleString("ru-RU")} ₸
             </p>
           </CardContent>
         </Card>
@@ -213,16 +213,71 @@ function AnalyticsPage() {
           <CardContent className="p-3 text-center">
             <p className="text-[10px] text-muted-foreground uppercase">Ср. расходы</p>
             <p className="text-base font-bold text-destructive">
-              {Math.round(filtered.reduce((s, c) => s + c.results.total, 0) / filtered.length).toLocaleString("ru-RU")} тг
+              {Math.round(filtered.reduce((s, c) => s + c.results.total, 0) / filtered.length).toLocaleString("ru-RU")} ₸
             </p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-3 text-center">
-            <p className="text-[10px] text-muted-foreground uppercase">Ср. маржа</p>
+            <p className="text-[10px] text-muted-foreground uppercase">Ср. рентабельность</p>
             <p className="text-base font-bold">
               {(filtered.reduce((s, c) => s + c.financial.profitMargin, 0) / filtered.length).toFixed(1)}%
             </p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Top profitable / unprofitable */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-xs font-semibold uppercase tracking-wide text-success">
+              Топ прибыльных рейсов
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-0">
+            <div className="divide-y">
+              {[...calculations]
+                .sort((a, b) => b.financial.financialResult - a.financial.financialResult)
+                .slice(0, 5)
+                .map((c) => (
+                  <div key={c.id} className="px-4 py-2.5 flex items-center justify-between">
+                    <div className="min-w-0">
+                      <p className="text-xs font-semibold">Поезд {c.trainNumber}</p>
+                      <p className="text-[10px] text-muted-foreground truncate">{c.trainRoute}</p>
+                    </div>
+                    <p className="text-xs font-bold text-success ml-2 shrink-0">
+                      +{Math.round(c.financial.financialResult).toLocaleString("ru-RU")} ₸
+                    </p>
+                  </div>
+                ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-xs font-semibold uppercase tracking-wide text-destructive">
+              Топ убыточных рейсов
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-0">
+            <div className="divide-y">
+              {[...calculations]
+                .sort((a, b) => a.financial.financialResult - b.financial.financialResult)
+                .slice(0, 5)
+                .map((c) => (
+                  <div key={c.id} className="px-4 py-2.5 flex items-center justify-between">
+                    <div className="min-w-0">
+                      <p className="text-xs font-semibold">Поезд {c.trainNumber}</p>
+                      <p className="text-[10px] text-muted-foreground truncate">{c.trainRoute}</p>
+                    </div>
+                    <p className="text-xs font-bold text-destructive ml-2 shrink-0">
+                      {Math.round(c.financial.financialResult).toLocaleString("ru-RU")} ₸
+                    </p>
+                  </div>
+                ))}
+            </div>
           </CardContent>
         </Card>
       </div>

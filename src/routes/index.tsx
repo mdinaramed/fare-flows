@@ -53,6 +53,11 @@ function IndexGuard() {
   useEffect(() => {
     if (typeof window !== "undefined") {
       if (sessionStorage.getItem("demo_auth")) {
+        const role = sessionStorage.getItem("demo_role");
+        if (role === "director") {
+          navigate({ to: "/director" });
+          return;
+        }
         setAuthed(true);
       } else {
         navigate({ to: "/login" });
